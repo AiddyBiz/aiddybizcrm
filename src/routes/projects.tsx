@@ -40,7 +40,7 @@ function Projects() {
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.18),transparent_60%)]" />
                 <Building2 className="absolute right-4 top-4 h-10 w-10 text-white/40" />
-                <Chip tone="primary"><span className="absolute left-3 top-3">{p.status}</span></Chip>
+                <span className="absolute left-3 top-3"><Chip tone="primary">{p.status}</Chip></span>
               </div>
               <div className="p-4">
                 <p className="font-display text-base font-semibold">{p.name}</p>

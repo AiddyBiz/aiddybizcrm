@@ -9,38 +9,294 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VisitsRouteImport } from './routes/visits'
+import { Route as SubscriptionRouteImport } from './routes/subscription'
+import { Route as ReferRouteImport } from './routes/refer'
+import { Route as RankingsRouteImport } from './routes/rankings'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LearningRouteImport } from './routes/learning'
+import { Route as LeadsRouteImport } from './routes/leads'
+import { Route as FollowupsRouteImport } from './routes/followups'
+import { Route as DealsRouteImport } from './routes/deals'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LeadsIdRouteImport } from './routes/leads.$id'
 
+const VisitsRoute = VisitsRouteImport.update({
+  id: '/visits',
+  path: '/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscriptionRoute = SubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReferRoute = ReferRouteImport.update({
+  id: '/refer',
+  path: '/refer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingsRoute = RankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearningRoute = LearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsRoute = LeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FollowupsRoute = FollowupsRouteImport.update({
+  id: '/followups',
+  path: '/followups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DealsRoute = DealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadsIdRoute = LeadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LeadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/dashboard': typeof DashboardRoute
+  '/deals': typeof DealsRoute
+  '/followups': typeof FollowupsRoute
+  '/leads': typeof LeadsRouteWithChildren
+  '/learning': typeof LearningRoute
+  '/profile': typeof ProfileRoute
+  '/projects': typeof ProjectsRoute
+  '/rankings': typeof RankingsRoute
+  '/refer': typeof ReferRoute
+  '/subscription': typeof SubscriptionRoute
+  '/visits': typeof VisitsRoute
+  '/leads/$id': typeof LeadsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/dashboard': typeof DashboardRoute
+  '/deals': typeof DealsRoute
+  '/followups': typeof FollowupsRoute
+  '/leads': typeof LeadsRouteWithChildren
+  '/learning': typeof LearningRoute
+  '/profile': typeof ProfileRoute
+  '/projects': typeof ProjectsRoute
+  '/rankings': typeof RankingsRoute
+  '/refer': typeof ReferRoute
+  '/subscription': typeof SubscriptionRoute
+  '/visits': typeof VisitsRoute
+  '/leads/$id': typeof LeadsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/dashboard': typeof DashboardRoute
+  '/deals': typeof DealsRoute
+  '/followups': typeof FollowupsRoute
+  '/leads': typeof LeadsRouteWithChildren
+  '/learning': typeof LearningRoute
+  '/profile': typeof ProfileRoute
+  '/projects': typeof ProjectsRoute
+  '/rankings': typeof RankingsRoute
+  '/refer': typeof ReferRoute
+  '/subscription': typeof SubscriptionRoute
+  '/visits': typeof VisitsRoute
+  '/leads/$id': typeof LeadsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/calendar'
+    | '/dashboard'
+    | '/deals'
+    | '/followups'
+    | '/leads'
+    | '/learning'
+    | '/profile'
+    | '/projects'
+    | '/rankings'
+    | '/refer'
+    | '/subscription'
+    | '/visits'
+    | '/leads/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/calendar'
+    | '/dashboard'
+    | '/deals'
+    | '/followups'
+    | '/leads'
+    | '/learning'
+    | '/profile'
+    | '/projects'
+    | '/rankings'
+    | '/refer'
+    | '/subscription'
+    | '/visits'
+    | '/leads/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/calendar'
+    | '/dashboard'
+    | '/deals'
+    | '/followups'
+    | '/leads'
+    | '/learning'
+    | '/profile'
+    | '/projects'
+    | '/rankings'
+    | '/refer'
+    | '/subscription'
+    | '/visits'
+    | '/leads/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalendarRoute: typeof CalendarRoute
+  DashboardRoute: typeof DashboardRoute
+  DealsRoute: typeof DealsRoute
+  FollowupsRoute: typeof FollowupsRoute
+  LeadsRoute: typeof LeadsRouteWithChildren
+  LearningRoute: typeof LearningRoute
+  ProfileRoute: typeof ProfileRoute
+  ProjectsRoute: typeof ProjectsRoute
+  RankingsRoute: typeof RankingsRoute
+  ReferRoute: typeof ReferRoute
+  SubscriptionRoute: typeof SubscriptionRoute
+  VisitsRoute: typeof VisitsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/visits': {
+      id: '/visits'
+      path: '/visits'
+      fullPath: '/visits'
+      preLoaderRoute: typeof VisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscription': {
+      id: '/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof SubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refer': {
+      id: '/refer'
+      path: '/refer'
+      fullPath: '/refer'
+      preLoaderRoute: typeof ReferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rankings': {
+      id: '/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learning': {
+      id: '/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof LearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads': {
+      id: '/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/followups': {
+      id: '/followups'
+      path: '/followups'
+      fullPath: '/followups'
+      preLoaderRoute: typeof FollowupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deals': {
+      id: '/deals'
+      path: '/deals'
+      fullPath: '/deals'
+      preLoaderRoute: typeof DealsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +304,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leads/$id': {
+      id: '/leads/$id'
+      path: '/$id'
+      fullPath: '/leads/$id'
+      preLoaderRoute: typeof LeadsIdRouteImport
+      parentRoute: typeof LeadsRoute
+    }
   }
 }
 
+interface LeadsRouteChildren {
+  LeadsIdRoute: typeof LeadsIdRoute
+}
+
+const LeadsRouteChildren: LeadsRouteChildren = {
+  LeadsIdRoute: LeadsIdRoute,
+}
+
+const LeadsRouteWithChildren = LeadsRoute._addFileChildren(LeadsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalendarRoute: CalendarRoute,
+  DashboardRoute: DashboardRoute,
+  DealsRoute: DealsRoute,
+  FollowupsRoute: FollowupsRoute,
+  LeadsRoute: LeadsRouteWithChildren,
+  LearningRoute: LearningRoute,
+  ProfileRoute: ProfileRoute,
+  ProjectsRoute: ProjectsRoute,
+  RankingsRoute: RankingsRoute,
+  ReferRoute: ReferRoute,
+  SubscriptionRoute: SubscriptionRoute,
+  VisitsRoute: VisitsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
