@@ -15,6 +15,7 @@ import { Route as ReferRouteImport } from './routes/refer'
 import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FollowupsRouteImport } from './routes/followups'
@@ -52,6 +53,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearningRoute = LearningRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/followups': typeof FollowupsRoute
   '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/rankings': typeof RankingsRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/followups': typeof FollowupsRoute
   '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/rankings': typeof RankingsRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/followups': typeof FollowupsRoute
   '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/rankings': typeof RankingsRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/followups'
     | '/leads'
     | '/learning'
+    | '/notifications'
     | '/profile'
     | '/projects'
     | '/rankings'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/followups'
     | '/leads'
     | '/learning'
+    | '/notifications'
     | '/profile'
     | '/projects'
     | '/rankings'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/followups'
     | '/leads'
     | '/learning'
+    | '/notifications'
     | '/profile'
     | '/projects'
     | '/rankings'
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   FollowupsRoute: typeof FollowupsRoute
   LeadsRoute: typeof LeadsRouteWithChildren
   LearningRoute: typeof LearningRoute
+  NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
   ProjectsRoute: typeof ProjectsRoute
   RankingsRoute: typeof RankingsRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learning': {
@@ -332,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   FollowupsRoute: FollowupsRoute,
   LeadsRoute: LeadsRouteWithChildren,
   LearningRoute: LearningRoute,
+  NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
   ProjectsRoute: ProjectsRoute,
   RankingsRoute: RankingsRoute,
