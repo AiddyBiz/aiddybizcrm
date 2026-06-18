@@ -1,12 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MobileShell, Avatar, Chip } from "@/components/mobile-shell";
-import { Trophy, Crown, TrendingUp } from "lucide-react";
+import { MobileShell, Avatar, Chip, SectionTitle, Tabs } from "@/components/mobile-shell";
+import { Trophy, Crown, TrendingUp, MapPin } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/rankings")({
   head: () => ({ meta: [{ title: "Rankings — AiddyBiz CRM" }] }),
   component: Rankings,
 });
+
+const LEAGUES = [
+  { l: "Bronze", emoji: "🥉", from: 0 },
+  { l: "Silver", emoji: "🥈", from: 1000 },
+  { l: "Gold", emoji: "🥇", from: 2500 },
+  { l: "Platinum", emoji: "💎", from: 5000 },
+  { l: "Diamond", emoji: "💠", from: 8000 },
+  { l: "Legend", emoji: "👑", from: 12000 },
+];
 
 const TOP = [
   { name: "Riya Kapoor", pts: 4820, deals: 9, rank: 1 },
@@ -22,13 +31,51 @@ const REST = [
 ];
 
 function Rankings() {
-  const [tab, setTab] = useState("Month");
+  const [scope, setScope] = useState("City");
+  const [period, setPeriod] = useState("Month");
+
   return (
     <MobileShell title="Rankings">
       <div className="px-4 pt-4">
-        <div className="flex gap-2">
+        {/* Your position */}
+        <div className="card-soft relative overflow-hidden p-5">
+          <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/25 blur-2xl" />
+          <p className="text-xs text-muted-foreground">Your position</p>
+          <h2 className="mt-1 text-xl font-semibold">Gold league · 4,310 pts</h2>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {[
+              { l: "City", v: "#14", sub: "Bengaluru" },
+              { l: "State", v: "#82", sub: "Karnataka" },
+              { l: "National", v: "#341", sub: "India" },
+            ].map((r) => (
+              <div key={r.l} className="rounded-2xl bg-surface-elevated p-3 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{r.l}</p>
+                <p className="mt-1 text-base font-semibold text-primary">{r.v}</p>
+                <p className="text-[10px] text-muted-foreground">{r.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Leagues strip */}
+        <SectionTitle title="Leagues" />
+        <div className="-mx-4 overflow-x-auto px-4">
+          <div className="flex gap-2 pb-1">
+            {LEAGUES.map((lg) => (
+              <div key={lg.l} className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${lg.l === "Gold" ? "border-primary bg-primary/15 text-primary" : "border-border bg-surface text-muted-foreground"}`}>
+                <span>{lg.emoji}</span>{lg.l}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Scope + period */}
+        <div className="mt-4">
+          <Tabs tabs={["City", "State", "National"]} value={scope} onChange={setScope} />
+        </div>
+        <div className="mt-2 flex gap-2">
           {["Week", "Month", "Quarter", "Year"].map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`flex-1 rounded-full border px-3 py-2 text-xs font-semibold ${tab === t ? "border-primary bg-primary/15 text-primary" : "border-border bg-surface text-muted-foreground"}`}>{t}</button>
+            <button key={t} onClick={() => setPeriod(t)} className={`flex-1 rounded-full border px-3 py-2 text-xs font-semibold ${period === t ? "border-primary bg-primary/15 text-primary" : "border-border bg-surface text-muted-foreground"}`}>{t}</button>
           ))}
         </div>
 
@@ -44,7 +91,7 @@ function Rankings() {
                 <Avatar name={u.name} size={u.rank === 1 ? 64 : 52} />
                 <p className="mt-2 truncate text-xs font-semibold">{u.name}</p>
                 <p className="text-[10px] text-muted-foreground">{u.pts} pts</p>
-                <div className={`mt-2 w-full rounded-t-2xl ${heights[i]} ${colors[i]} grid place-items-center ${fg[i]} font-display text-xl font-bold`}>
+                <div className={`mt-2 w-full rounded-t-2xl ${heights[i]} ${colors[i]} grid place-items-center ${fg[i]} text-xl font-bold`}>
                   {u.rank}
                 </div>
               </div>
@@ -55,10 +102,10 @@ function Rankings() {
         <div className="mt-6 card-soft p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/15 text-primary font-display font-bold">7</span>
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/15 text-primary font-bold">{scope === "City" ? 14 : scope === "State" ? 82 : 341}</span>
               <div>
                 <p className="text-sm font-semibold">You · Arjun K.</p>
-                <p className="text-xs text-muted-foreground">4,310 pts this {tab.toLowerCase()}</p>
+                <p className="text-xs text-muted-foreground"><MapPin className="inline h-3 w-3" /> {scope} · {period.toLowerCase()}</p>
               </div>
             </div>
             <Chip tone="success"><TrendingUp className="h-3 w-3" />+3</Chip>
@@ -66,10 +113,11 @@ function Rankings() {
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-elevated">
             <div className="h-full w-[68%] grad-primary" />
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">580 pts to next rank</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">580 pts to Platinum</p>
         </div>
 
-        <ul className="mt-5 card-soft divide-y divide-border/60 overflow-hidden">
+        <SectionTitle title="Leaderboard" />
+        <ul className="card-soft divide-y divide-border/60 overflow-hidden">
           {REST.map((u, i) => (
             <li key={u.name} className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 p-3">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-surface-elevated text-xs font-semibold text-muted-foreground">{i + 4}</span>
@@ -78,7 +126,7 @@ function Rankings() {
                 <p className="truncate text-sm font-semibold">{u.name}</p>
                 <p className="text-[11px] text-muted-foreground">{u.deals} deals</p>
               </div>
-              <p className="font-display text-sm font-semibold">{u.pts}</p>
+              <p className="text-sm font-semibold">{u.pts}</p>
             </li>
           ))}
         </ul>
