@@ -1,11 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2, Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall } from "lucide-react";
+import {
+  Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2,
+  Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare, IndianRupee,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
 const BOTTOM_TABS: Tab[] = [
-  { to: "/dashboard", label: "Home", icon: Home },
+  { to: "/dashboard", label: "Dashboard", icon: Home },
   { to: "/leads", label: "Leads", icon: Users },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/profile", label: "Profile", icon: User },
@@ -21,9 +24,18 @@ const MENU_LINKS: Tab[] = [
   { to: "/deals", label: "Deals", icon: Handshake },
   { to: "/rankings", label: "Rankings", icon: Trophy },
   { to: "/learning", label: "Learning Zone", icon: GraduationCap },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/subscription", label: "Subscription", icon: CreditCard },
   { to: "/refer", label: "Refer & Earn", icon: Gift },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Add Lead", desc: "Capture a new lead", icon: Users, to: "/leads" },
+  { label: "Add Follow-up", desc: "Schedule a call or message", icon: PhoneCall, to: "/followups" },
+  { label: "Schedule Site Visit", desc: "Book a property visit", icon: MapPin, to: "/visits" },
+  { label: "Add Deal", desc: "Move lead to negotiation", icon: IndianRupee, to: "/deals" },
+  { label: "Add Task", desc: "Personal to-do", icon: CheckSquare, to: "/calendar" },
 ];
 
 export function MobileShell({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
@@ -40,58 +52,68 @@ export function MobileShell({ title, children, action }: { title: string; childr
         </button>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">AiddyBiz</p>
-          <h1 className="truncate font-display text-lg font-semibold leading-tight">{title}</h1>
+          <h1 className="truncate text-lg font-semibold leading-tight">{title}</h1>
         </div>
         {action ?? (
           <>
             <button className="grid h-10 w-10 place-items-center rounded-full bg-surface text-foreground/90 active:scale-95"><Search className="h-5 w-5" /></button>
-            <button className="relative grid h-10 w-10 place-items-center rounded-full bg-surface text-foreground/90 active:scale-95">
+            <Link to="/notifications" className="relative grid h-10 w-10 place-items-center rounded-full bg-surface text-foreground/90 active:scale-95">
               <Bell className="h-5 w-5" />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-            </button>
+            </Link>
           </>
         )}
       </header>
 
       {/* Content */}
-      <main className="pb-32">{children}</main>
+      <main className="pb-28">{children}</main>
 
-      {/* FAB */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-40 flex justify-center">
-        <div className="pointer-events-auto flex flex-col items-center gap-3">
-          {fabOpen && (
-            <div className="flex flex-col items-end gap-2 rounded-3xl glass p-2 shadow-2xl">
-              {[
-                { label: "Add Lead", icon: Users, to: "/leads" },
-                { label: "Schedule Visit", icon: MapPin, to: "/visits" },
-                { label: "Log Call", icon: PhoneCall, to: "/followups" },
-                { label: "Create Deal", icon: Handshake, to: "/deals" },
-              ].map((a) => (
-                <Link key={a.label} to={a.to} onClick={() => setFabOpen(false)} className="flex items-center gap-3 rounded-2xl bg-surface-elevated px-3 py-2 pr-4 text-sm font-medium">
-                  <span className="grid h-8 w-8 place-items-center rounded-xl grad-primary text-primary-foreground"><a.icon className="h-4 w-4" /></span>
-                  {a.label}
-                </Link>
-              ))}
-            </div>
-          )}
-          <button
-            onClick={() => setFabOpen((v) => !v)}
-            aria-label="Quick add"
-            className="grid h-14 w-14 place-items-center rounded-full grad-primary text-primary-foreground shadow-[0_10px_30px_-8px_oklch(0.88_0.19_125/0.6)] transition active:scale-95"
-          >
-            {fabOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Bottom nav */}
-      <nav className="glass fixed inset-x-0 bottom-0 z-30 border-t border-border/60 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
-        <ul className="mx-auto grid max-w-md grid-cols-5 items-end">
-          {BOTTOM_TABS.slice(0, 2).map((t) => <NavItem key={t.to} tab={t} active={pathname.startsWith(t.to)} />)}
-          <li />
-          {BOTTOM_TABS.slice(2).map((t) => <NavItem key={t.to} tab={t} active={pathname.startsWith(t.to)} />)}
+      {/* Bottom nav with centered FAB notch */}
+      <nav className="glass fixed inset-x-0 bottom-0 z-30 border-t border-border/60 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
+        <ul className="mx-auto grid max-w-md grid-cols-5 items-center">
+          <NavItem tab={BOTTOM_TABS[0]} active={pathname.startsWith(BOTTOM_TABS[0].to)} />
+          <NavItem tab={BOTTOM_TABS[1]} active={pathname.startsWith(BOTTOM_TABS[1].to)} />
+          {/* Spacer for FAB */}
+          <li className="relative">
+            <button
+              onClick={() => setFabOpen(true)}
+              aria-label="Quick add"
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 grid h-16 w-16 place-items-center rounded-full grad-primary text-primary-foreground shadow-[0_12px_28px_-6px_oklch(0.705_0.17_162/0.55)] ring-4 ring-background transition active:scale-95"
+            >
+              <Plus className="h-7 w-7" strokeWidth={2.5} />
+            </button>
+          </li>
+          <NavItem tab={BOTTOM_TABS[2]} active={pathname.startsWith(BOTTOM_TABS[2].to)} />
+          <NavItem tab={BOTTOM_TABS[3]} active={pathname.startsWith(BOTTOM_TABS[3].to)} />
         </ul>
       </nav>
+
+      {/* FAB bottom sheet */}
+      {fabOpen && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm animate-in fade-in" onClick={() => setFabOpen(false)} />
+          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-surface-elevated p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-2xl animate-in slide-in-from-bottom">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Quick add</h3>
+              <button onClick={() => setFabOpen(false)} className="grid h-8 w-8 place-items-center rounded-full bg-surface"><X className="h-4 w-4" /></button>
+            </div>
+            <ul className="space-y-2">
+              {QUICK_ACTIONS.map((a) => (
+                <li key={a.label}>
+                  <Link to={a.to} onClick={() => setFabOpen(false)} className="flex items-center gap-3 rounded-2xl bg-surface p-3 active:scale-[0.99]">
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl grad-primary text-primary-foreground"><a.icon className="h-5 w-5" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">{a.label}</p>
+                      <p className="truncate text-xs text-muted-foreground">{a.desc}</p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Side menu */}
       {menuOpen && (
@@ -100,9 +122,9 @@ export function MobileShell({ title, children, action }: { title: string; childr
           <aside className="absolute inset-y-0 left-0 w-[82%] max-w-sm overflow-y-auto bg-surface-elevated p-5 pt-[max(env(safe-area-inset-top),1.25rem)] shadow-2xl">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-2xl grad-primary font-display text-lg font-bold text-primary-foreground">A</div>
+                <div className="grid h-11 w-11 place-items-center rounded-2xl grad-primary text-lg font-bold text-primary-foreground">A</div>
                 <div>
-                  <p className="font-display text-base font-semibold">AiddyBiz</p>
+                  <p className="text-base font-semibold">AiddyBiz</p>
                   <p className="text-xs text-muted-foreground">Real Estate CRM</p>
                 </div>
               </div>
@@ -132,7 +154,7 @@ function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
   const Icon = tab.icon;
   return (
     <li>
-      <Link to={tab.to} className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${active ? "text-primary" : "text-muted-foreground"}`}>
+      <Link to={tab.to} className={`flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition ${active ? "text-primary" : "text-muted-foreground"}`}>
         <span className={`grid h-9 w-12 place-items-center rounded-2xl transition ${active ? "bg-primary/15" : ""}`}>
           <Icon className="h-5 w-5" />
         </span>
@@ -146,7 +168,7 @@ function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
 export function SectionTitle({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <div className="mb-3 mt-6 flex items-center justify-between px-1">
-      <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
       {action}
     </div>
   );
@@ -166,14 +188,26 @@ export function Chip({ children, tone = "default" }: { children: ReactNode; tone
 
 export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-  const hues = [125, 250, 200, 30, 320, 160];
+  const hues = [162, 200, 250, 30, 320, 130];
   const hue = hues[name.charCodeAt(0) % hues.length];
   return (
     <div
-      className="grid shrink-0 place-items-center rounded-full font-display text-sm font-semibold text-primary-foreground"
-      style={{ width: size, height: size, background: `linear-gradient(135deg, oklch(0.82 0.16 ${hue}), oklch(0.65 0.18 ${(hue + 40) % 360}))` }}
+      className="grid shrink-0 place-items-center rounded-full text-sm font-semibold text-primary-foreground"
+      style={{ width: size, height: size, background: `linear-gradient(135deg, oklch(0.78 0.16 ${hue}), oklch(0.6 0.16 ${(hue + 30) % 360}))` }}
     >
       {initials}
+    </div>
+  );
+}
+
+export function Tabs({ tabs, value, onChange }: { tabs: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="rounded-2xl bg-surface p-1">
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0,1fr))` }}>
+        {tabs.map((t) => (
+          <button key={t} onClick={() => onChange(t)} className={`rounded-xl px-2 py-2 text-xs font-semibold transition ${value === t ? "grad-primary text-primary-foreground" : "text-muted-foreground"}`}>{t}</button>
+        ))}
+      </div>
     </div>
   );
 }
