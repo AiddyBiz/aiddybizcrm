@@ -104,6 +104,27 @@ function LoginPage() {
           <Building2 className="h-3 w-3" /> Built for real estate teams
         </div>
       </div>
+
+      {showInstall && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-white p-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-200" />
+          <div className="flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <Smartphone className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-slate-900">Install AiddyBiz CRM</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">Get instant notifications and a faster native experience.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleInstall}
+            className="mt-5 w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 active:scale-[0.99]"
+          >
+            Install App
+          </button>
+        </div>
+      )}
     </div>
   );
 }
