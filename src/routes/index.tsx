@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Building2, Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Building2, Eye, EyeOff, Mail, Lock, ArrowRight, Smartphone } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,6 +15,36 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstall(true);
+    };
+    const handleAppInstalled = () => setShowInstall(false);
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+    setShowInstall(false);
+  };
+
   const submit = (e: FormEvent) => { e.preventDefault(); navigate({ to: "/dashboard" }); };
 
   return (
@@ -74,6 +104,27 @@ function LoginPage() {
           <Building2 className="h-3 w-3" /> Built for real estate teams
         </div>
       </div>
+
+      {showInstall && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-white p-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-200" />
+          <div className="flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <Smartphone className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-slate-900">Install AiddyBiz CRM</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">Get instant notifications and a faster native experience.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleInstall}
+            className="mt-5 w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 active:scale-[0.99]"
+          >
+            Install App
+          </button>
+        </div>
+      )}
     </div>
   );
 }
