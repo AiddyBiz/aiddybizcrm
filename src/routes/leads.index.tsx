@@ -3,7 +3,7 @@ import { MobileShell, Chip, Avatar } from "@/components/mobile-shell";
 import { Search, SlidersHorizontal, Phone, MessageCircle, Flame } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/leads")({
+export const Route = createFileRoute("/leads/")({
   head: () => ({ meta: [{ title: "Leads — AiddyBiz CRM" }] }),
   component: Leads,
 });

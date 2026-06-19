@@ -17,12 +17,12 @@ import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LearningRouteImport } from './routes/learning'
-import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as DealsRouteImport } from './routes/deals'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LeadsIndexRouteImport } from './routes/leads.index'
 import { Route as LeadsIdRouteImport } from './routes/leads.$id'
 
 const VisitsRoute = VisitsRouteImport.update({
@@ -65,11 +65,6 @@ const LearningRoute = LearningRouteImport.update({
   path: '/learning',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeadsRoute = LeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FollowupsRoute = FollowupsRouteImport.update({
   id: '/followups',
   path: '/followups',
@@ -95,10 +90,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadsIndexRoute = LeadsIndexRouteImport.update({
+  id: '/leads/',
+  path: '/leads/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsIdRoute = LeadsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LeadsRoute,
+  id: '/leads/$id',
+  path: '/leads/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -107,7 +107,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/deals': typeof DealsRoute
   '/followups': typeof FollowupsRoute
-  '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -117,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/subscription': typeof SubscriptionRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
+  '/leads/': typeof LeadsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -124,7 +124,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/deals': typeof DealsRoute
   '/followups': typeof FollowupsRoute
-  '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -134,6 +133,7 @@ export interface FileRoutesByTo {
   '/subscription': typeof SubscriptionRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
+  '/leads': typeof LeadsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,7 +142,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/deals': typeof DealsRoute
   '/followups': typeof FollowupsRoute
-  '/leads': typeof LeadsRouteWithChildren
   '/learning': typeof LearningRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -152,6 +151,7 @@ export interface FileRoutesById {
   '/subscription': typeof SubscriptionRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
+  '/leads/': typeof LeadsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,7 +161,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deals'
     | '/followups'
-    | '/leads'
     | '/learning'
     | '/notifications'
     | '/profile'
@@ -171,6 +170,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/visits'
     | '/leads/$id'
+    | '/leads/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -178,7 +178,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deals'
     | '/followups'
-    | '/leads'
     | '/learning'
     | '/notifications'
     | '/profile'
@@ -188,6 +187,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/visits'
     | '/leads/$id'
+    | '/leads'
   id:
     | '__root__'
     | '/'
@@ -195,7 +195,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deals'
     | '/followups'
-    | '/leads'
     | '/learning'
     | '/notifications'
     | '/profile'
@@ -205,6 +204,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/visits'
     | '/leads/$id'
+    | '/leads/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,7 +213,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DealsRoute: typeof DealsRoute
   FollowupsRoute: typeof FollowupsRoute
-  LeadsRoute: typeof LeadsRouteWithChildren
   LearningRoute: typeof LearningRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
@@ -222,6 +221,8 @@ export interface RootRouteChildren {
   ReferRoute: typeof ReferRoute
   SubscriptionRoute: typeof SubscriptionRoute
   VisitsRoute: typeof VisitsRoute
+  LeadsIdRoute: typeof LeadsIdRoute
+  LeadsIndexRoute: typeof LeadsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -282,13 +283,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearningRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leads': {
-      id: '/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof LeadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/followups': {
       id: '/followups'
       path: '/followups'
@@ -324,25 +318,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leads/': {
+      id: '/leads/'
+      path: '/leads'
+      fullPath: '/leads/'
+      preLoaderRoute: typeof LeadsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads/$id': {
       id: '/leads/$id'
-      path: '/$id'
+      path: '/leads/$id'
       fullPath: '/leads/$id'
       preLoaderRoute: typeof LeadsIdRouteImport
-      parentRoute: typeof LeadsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface LeadsRouteChildren {
-  LeadsIdRoute: typeof LeadsIdRoute
-}
-
-const LeadsRouteChildren: LeadsRouteChildren = {
-  LeadsIdRoute: LeadsIdRoute,
-}
-
-const LeadsRouteWithChildren = LeadsRoute._addFileChildren(LeadsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -350,7 +341,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DealsRoute: DealsRoute,
   FollowupsRoute: FollowupsRoute,
-  LeadsRoute: LeadsRouteWithChildren,
   LearningRoute: LearningRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
@@ -359,6 +349,8 @@ const rootRouteChildren: RootRouteChildren = {
   ReferRoute: ReferRoute,
   SubscriptionRoute: SubscriptionRoute,
   VisitsRoute: VisitsRoute,
+  LeadsIdRoute: LeadsIdRoute,
+  LeadsIndexRoute: LeadsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
