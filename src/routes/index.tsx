@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Building2, Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Building2, Eye, EyeOff, Mail, Lock, ArrowRight, Smartphone } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,6 +15,36 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstall(true);
+    };
+    const handleAppInstalled = () => setShowInstall(false);
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+    setShowInstall(false);
+  };
+
   const submit = (e: FormEvent) => { e.preventDefault(); navigate({ to: "/dashboard" }); };
 
   return (
