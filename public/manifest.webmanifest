@@ -1,0 +1,14 @@
+{
+  "name": "AiddyBiz CRM",
+  "short_name": "AiddyBiz",
+  "description": "Modern mobile CRM for real estate teams.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0F19",
+  "theme_color": "#4F46E5",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
