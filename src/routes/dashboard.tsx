@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell, SectionTitle, Chip, Avatar } from "@/components/mobile-shell";
-import { Flame, PhoneCall, Car, IndianRupee, ChevronRight, TrendingUp, Trophy, Zap, Target } from "lucide-react";
+import { Flame, PhoneCall, Car, IndianRupee, ChevronRight, TrendingUp, Trophy, Zap, Target, Calendar } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — AiddyBiz CRM" }, { name: "description", content: "Your real estate pipeline at a glance." }] }),
@@ -20,18 +21,27 @@ const MISSIONS = [
   { label: "Site Visits", done: 2, total: 4 },
 ];
 
-// 7 weeks x 7 days mock contribution data
-const ACTIVITY = Array.from({ length: 49 }, (_, i) => {
-  const seeded = (i * 9301 + 49297) % 233280;
-  const v = (seeded / 233280) * 4;
-  return Math.floor(v);
-});
+// Generate deterministic activity values for up to 30 days
+function makeActivity(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => {
+    const seeded = ((i + 7) * 9301 + 49297) % 233280;
+    return Math.floor((seeded / 233280) * 4);
+  });
+}
 
 function Dashboard() {
+  const [range, setRange] = useState<"7d" | "month">("7d");
+  const days = range === "7d" ? 7 : 30;
+  const activity = useMemo(() => makeActivity(days), [days]);
+  const dayLabel = (i: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (days - 1 - i));
+    return d.toLocaleDateString("en-IN", { weekday: "short" }).slice(0, 1);
+  };
+
   return (
     <MobileShell title="Dashboard">
       <div className="space-y-5 px-4 pt-4">
-        {/* Greeting */}
         <div className="card-soft relative overflow-hidden p-5">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/25 blur-2xl" />
           <p className="text-xs text-muted-foreground">Good morning, Arjun</p>
@@ -42,7 +52,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Today's Focus */}
         <section>
           <SectionTitle title="Today's Focus" />
           <div className="grid grid-cols-2 gap-3">
@@ -59,7 +68,6 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Growth + Streak */}
         <div className="grid grid-cols-2 gap-3">
           <Link to="/profile" className="card-soft relative overflow-hidden p-4">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/20 blur-2xl" />
@@ -91,39 +99,48 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Sales Momentum */}
+        {/* Sales Momentum — defaults to 7 days */}
         <section>
-          <SectionTitle title="Sales Momentum" action={<span className="text-xs text-muted-foreground">last 7 weeks</span>} />
+          <SectionTitle
+            title="Sales Momentum"
+            action={
+              <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-0.5">
+                <button onClick={() => setRange("7d")} className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${range === "7d" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>7 Days</button>
+                <button onClick={() => setRange("month")} className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ${range === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                  <Calendar className="h-3 w-3" /> Month
+                </button>
+              </div>
+            }
+          />
           <div className="card-soft p-4">
-            <div className="flex gap-1.5">
-              {Array.from({ length: 7 }).map((_, w) => (
-                <div key={w} className="flex flex-1 flex-col gap-1.5">
-                  {Array.from({ length: 7 }).map((_, d) => {
-                    const v = ACTIVITY[w * 7 + d];
-                    const bg =
-                      v === 0 ? "bg-surface-elevated" :
-                      v === 1 ? "bg-primary/25" :
-                      v === 2 ? "bg-primary/55" :
-                      "bg-primary";
-                    return <span key={d} className={`aspect-square w-full rounded-[4px] ${bg}`} />;
-                  })}
-                </div>
-              ))}
+            <div className="flex items-end gap-1.5">
+              {activity.map((v, i) => {
+                const h = 16 + v * 16;
+                const bg =
+                  v === 0 ? "bg-surface-elevated" :
+                  v === 1 ? "bg-primary/35" :
+                  v === 2 ? "bg-primary/65" :
+                  "bg-primary";
+                return (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                    <span className={`w-full rounded-md ${bg}`} style={{ height: h }} />
+                    {range === "7d" && <span className="text-[9px] text-muted-foreground">{dayLabel(i)}</span>}
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>Less</span>
+              <span>{range === "7d" ? "Last 7 days" : "Last 30 days"}</span>
               <div className="flex items-center gap-1">
                 <span className="h-2.5 w-2.5 rounded-sm bg-surface-elevated" />
-                <span className="h-2.5 w-2.5 rounded-sm bg-primary/25" />
-                <span className="h-2.5 w-2.5 rounded-sm bg-primary/55" />
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary/35" />
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary/65" />
                 <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
               </div>
-              <span>More</span>
             </div>
           </div>
         </section>
 
-        {/* Weekly Mission */}
         <section>
           <SectionTitle title="Weekly Mission" action={<Chip tone="primary"><Target className="h-3 w-3" />+250 XP</Chip>} />
           <div className="card-soft space-y-3 p-4">
@@ -144,7 +161,6 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Hot leads */}
         <section>
           <SectionTitle title="Hot leads" action={<Link to="/leads" className="text-xs font-medium text-primary">View all</Link>} />
           <ul className="space-y-2">
