@@ -1,9 +1,12 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2,
   Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare, IndianRupee,
+  ArrowRight,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { LEADS } from "@/lib/leads-data";
+import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, type QuickAddType } from "@/lib/quick-add-store";
 
 type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -23,25 +26,29 @@ const MENU_LINKS: Tab[] = [
   { to: "/refer", label: "Refer & Earn", icon: Gift },
 ];
 
-const QUICK_ACTIONS = [
-  { label: "Add Lead", desc: "Capture a new lead", icon: Users, to: "/leads" },
-  { label: "Add Follow-up", desc: "Schedule a call or message", icon: PhoneCall, to: "/followups" },
-  { label: "Schedule Site Visit", desc: "Book a property visit", icon: MapPin, to: "/visits" },
-  { label: "Add Deal", desc: "Move lead to negotiation", icon: IndianRupee, to: "/deals" },
-  { label: "Add Task", desc: "Personal to-do", icon: CheckSquare, to: "/calendar" },
+const QUICK_ACTIONS: { label: string; desc: string; icon: React.ComponentType<{ className?: string }>; type: QuickAddType }[] = [
+  { label: "Add Lead", desc: "Capture a new lead", icon: Users, type: "lead" },
+  { label: "Add Follow-up", desc: "Schedule a call or message", icon: PhoneCall, type: "followup" },
+  { label: "Schedule Site Visit", desc: "Book a property visit", icon: MapPin, type: "visit" },
+  { label: "Add Deal", desc: "Move lead to negotiation", icon: IndianRupee, type: "deal" },
+  { label: "Add Task", desc: "Personal to-do", icon: CheckSquare, type: "task" },
 ];
 
 export function MobileShell({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+  const [quickAdd, setQuickAdd] = useState<QuickAddType | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => onQuickAdd((t) => setQuickAdd(t)), []);
+  useEffect(() => onGlobalSearch(() => setSearchOpen(true)), []);
 
   const isActive = (to: string) =>
     to === "/dashboard" ? pathname === "/" || pathname.startsWith("/dashboard") : pathname.startsWith(to);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      {/* Top bar */}
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
         <button onClick={() => setMenuOpen(true)} className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-slate-700 hover:bg-slate-100 active:scale-95">
           <Menu className="h-5 w-5" />
@@ -52,7 +59,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
         </div>
         {action ?? (
           <>
-            <button className="grid h-10 w-10 place-items-center rounded-md text-slate-700 hover:bg-slate-100"><Search className="h-5 w-5" /></button>
+            <button onClick={() => openGlobalSearch()} className="grid h-10 w-10 place-items-center rounded-md text-slate-700 hover:bg-slate-100"><Search className="h-5 w-5" /></button>
             <Link to="/notifications" className="relative grid h-10 w-10 place-items-center rounded-md text-slate-700 hover:bg-slate-100">
               <Bell className="h-5 w-5" />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-indigo-600" />
@@ -61,10 +68,8 @@ export function MobileShell({ title, children, action }: { title: string; childr
         )}
       </header>
 
-      {/* Content */}
       <main className="pb-24">{children}</main>
 
-      {/* Bottom nav — h-16 white, border-t */}
       <nav className="fixed inset-x-0 bottom-0 z-30 h-16 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
           <BottomItem to="/" label="Home" icon={Home} active={pathname === "/" || pathname.startsWith("/dashboard")} />
@@ -83,7 +88,6 @@ export function MobileShell({ title, children, action }: { title: string; childr
         </ul>
       </nav>
 
-      {/* FAB bottom sheet */}
       {fabOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-slate-900/40" onClick={() => setFabOpen(false)} />
@@ -96,13 +100,17 @@ export function MobileShell({ title, children, action }: { title: string; childr
             <ul className="space-y-2">
               {QUICK_ACTIONS.map((a) => (
                 <li key={a.label}>
-                  <Link to={a.to} onClick={() => setFabOpen(false)} className="flex items-center gap-3 rounded-md border border-slate-200 p-3 hover:bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => { setFabOpen(false); openQuickAdd(a.type); }}
+                    className="flex w-full items-center gap-3 rounded-md border border-slate-200 p-3 text-left hover:bg-slate-50"
+                  >
                     <span className="grid h-10 w-10 place-items-center rounded-md bg-indigo-50 text-indigo-600"><a.icon className="h-5 w-5" /></span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-slate-900">{a.label}</p>
                       <p className="truncate text-xs text-slate-500">{a.desc}</p>
                     </div>
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -110,7 +118,6 @@ export function MobileShell({ title, children, action }: { title: string; childr
         </div>
       )}
 
-      {/* Side menu */}
       {menuOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-slate-900/40" onClick={() => setMenuOpen(false)} />
@@ -141,6 +148,9 @@ export function MobileShell({ title, children, action }: { title: string; childr
           </aside>
         </div>
       )}
+
+      {quickAdd && <QuickAddModal type={quickAdd} onClose={() => setQuickAdd(null)} />}
+      {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>
   );
 }
@@ -153,6 +163,128 @@ function BottomItem({ to, label, icon: Icon, active }: { to: string; label: stri
         {label}
       </Link>
     </li>
+  );
+}
+
+/* ---------- Quick Add Modal ---------- */
+function QuickAddModal({ type, onClose }: { type: QuickAddType; onClose: () => void }) {
+  const navigate = useNavigate();
+  const cfg = {
+    lead:     { title: "Add New Lead",       icon: Users,      goto: "/leads",     fields: ["Full name", "Phone", "Project", "Budget"] },
+    followup: { title: "Schedule Follow-up", icon: PhoneCall,  goto: "/followups", fields: ["Lead", "Date & time", "Channel", "Notes"] },
+    visit:    { title: "Schedule Site Visit",icon: MapPin,     goto: "/visits",    fields: ["Lead", "Project", "Date & time", "Notes"] },
+    deal:     { title: "Add Deal",           icon: IndianRupee,goto: "/deals",     fields: ["Lead", "Project", "Deal value", "Stage"] },
+    task:     { title: "Add Task",           icon: CheckSquare,goto: "/calendar",  fields: ["Title", "Due date", "Priority", "Notes"] },
+  }[type];
+  const Icon = cfg.icon;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Icon className="h-5 w-5" /></span>
+          <h3 className="flex-1 text-base font-semibold text-slate-900">{cfg.title}</h3>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <form
+          onSubmit={(e) => { e.preventDefault(); onClose(); navigate({ to: cfg.goto }); }}
+          className="mt-4 space-y-3"
+        >
+          {cfg.fields.map((f) => (
+            <label key={f} className="block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{f}</span>
+              <input
+                placeholder={f}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+            </label>
+          ))}
+          <button type="submit" className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700">
+            Save <ArrowRight className="h-4 w-4" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Global Search ---------- */
+function GlobalSearchOverlay({ onClose }: { onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const navigate = useNavigate();
+  const results = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return { leads: [], pages: [] as { label: string; to: string }[] };
+    const leads = LEADS.filter((l) =>
+      l.name.toLowerCase().includes(term) ||
+      l.project.toLowerCase().includes(term) ||
+      l.phone.includes(term) ||
+      l.email.toLowerCase().includes(term)
+    ).slice(0, 6);
+    const pages = MENU_LINKS
+      .filter((p) => p.label.toLowerCase().includes(term))
+      .map((p) => ({ label: p.label, to: p.to }));
+    return { leads, pages };
+  }, [q]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-900/50 p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="mt-12 w-full max-w-md rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5">
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            autoFocus
+            placeholder="Search leads, projects, pages…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+          />
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto p-2">
+          {!q.trim() && <p className="px-3 py-6 text-center text-xs text-slate-500">Type to search leads, projects, and pages</p>}
+          {results.leads.length > 0 && (
+            <>
+              <p className="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Leads</p>
+              <ul>
+                {results.leads.map((l) => (
+                  <li key={l.id}>
+                    <button onClick={() => { onClose(); navigate({ to: "/leads/$id", params: { id: l.id } }); }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50">
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+                        {l.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-900">{l.name}</p>
+                        <p className="truncate text-[11px] text-slate-500">{l.project} · {l.phone}</p>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {results.pages.length > 0 && (
+            <>
+              <p className="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Pages</p>
+              <ul>
+                {results.pages.map((p) => (
+                  <li key={p.to}>
+                    <button onClick={() => { onClose(); navigate({ to: p.to }); }}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50">
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-400" /> {p.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {q.trim() && results.leads.length === 0 && results.pages.length === 0 && (
+            <p className="px-3 py-6 text-center text-xs text-slate-500">No results for "{q}"</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
