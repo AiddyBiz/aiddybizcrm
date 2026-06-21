@@ -42,7 +42,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5, minimum-scale=1, user-scalable=yes, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" },
       { name: "theme-color", content: "#0B0F19" },
       { title: "AiddyBiz CRM — Real Estate" },
       { name: "description", content: "Modern mobile CRM for real estate teams. Leads, follow-ups, site visits and deals — all in one place." },
