@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell, Chip, SectionTitle } from "@/components/mobile-shell";
-import { Building2, MapPin, IndianRupee, Search, Eye, Download, Repeat, TrendingUp, Pencil, X, Youtube, FileText, Link2, Plus } from "lucide-react";
-import { useState } from "react";
+import { Building2, MapPin, IndianRupee, Search, Eye, Download, Repeat, TrendingUp, Pencil, X, Youtube, FileText, Link2, Plus, Send } from "lucide-react";
+import { useMemo, useState } from "react";
+import { SendToClientModal, type Shareable } from "@/components/send-to-client";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({ meta: [{ title: "Projects — AiddyBiz CRM" }] }),
@@ -13,7 +14,6 @@ type Project = {
   id: string;
   name: string; type: string; loc: string; price: string; config: string; status: string; hue: number;
   views: number; downloads: number; revisits: number; priceViews: number; leads: number;
-  // Landing-page builder fields
   youtubeUrl?: string;
   brochurePdfName?: string;
   description?: string;
@@ -26,15 +26,59 @@ const SEED: Project[] = [
   { id: "p2", name: "Lakeview Township", type: "Gated Township", loc: "Sarjapur", price: "1.2 – 2.4 Cr", config: "Villas + Plots", status: "Launch", hue: 200, views: 980, downloads: 142, revisits: 64, priceViews: 248, leads: 28, ctas: [] },
   { id: "p3", name: "Sunrise Villas", type: "Villas", loc: "Whitefield", price: "2.5 – 4.1 Cr", config: "3,4 BHK", status: "U/C", hue: 30, views: 612, downloads: 88, revisits: 41, priceViews: 156, leads: 19, ctas: [] },
   { id: "p4", name: "Palm Farmhouses", type: "Farmhouses", loc: "Nandi Hills", price: "65L – 1.1 Cr", config: "1 acre+", status: "Ready", hue: 130, views: 824, downloads: 122, revisits: 58, priceViews: 198, leads: 24, ctas: [] },
+  { id: "p5", name: "Skyline Residences", type: "Flats", loc: "Hebbal", price: "78L – 1.4 Cr", config: "2,3 BHK", status: "Launch", hue: 260, views: 540, downloads: 76, revisits: 32, priceViews: 124, leads: 17, ctas: [] },
 ];
+
+const TABS = ["All", "Plotting", "Township", "Villas", "Flats", "Farmhouses"] as const;
+type Tab = typeof TABS[number];
+
+function matchesTab(p: Project, tab: Tab) {
+  if (tab === "All") return true;
+  const t = p.type.toLowerCase();
+  switch (tab) {
+    case "Plotting": return t.includes("plot");
+    case "Township": return t.includes("township");
+    case "Villas": return t.includes("villa");
+    case "Flats": return t.includes("flat") || t.includes("apartment") || t.includes("residence");
+    case "Farmhouses": return t.includes("farm");
+  }
+  return false;
+}
 
 function Projects() {
   const [projects, setProjects] = useState<Project[]>(SEED);
   const [editing, setEditing] = useState<Project | null>(null);
+  const [tab, setTab] = useState<Tab>("All");
+  const [search, setSearch] = useState("");
+  const [sharing, setSharing] = useState<Shareable | null>(null);
 
   function save(updated: Project) {
     setProjects((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
     setEditing(null);
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return projects
+      .filter((p) => matchesTab(p, tab))
+      .filter((p) =>
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.loc.toLowerCase().includes(q) ||
+        p.type.toLowerCase().includes(q),
+      );
+  }, [projects, tab, search]);
+
+  function buildShare(p: Project): Shareable {
+    return {
+      title: `${p.name} — ${p.type}`,
+      body:
+        `📍 ${p.loc}\n💰 Price: ${p.price}\n🏠 ${p.config}\n📌 Status: ${p.status}` +
+        (p.description ? `\n\n${p.description}` : "") +
+        (p.youtubeUrl ? `\n\n▶️ Video: ${p.youtubeUrl}` : "") +
+        (p.mapEmbed ? `\n🗺️ Map: ${p.mapEmbed}` : "") +
+        (p.ctas.length ? `\n\n${p.ctas.map((c) => `• ${c.label}: ${c.url}`).join("\n")}` : ""),
+    };
   }
 
   return (
@@ -42,20 +86,39 @@ function Projects() {
       <div className="px-4 pt-4">
         <div className="flex items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2.5">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input placeholder="Search projects, locations" className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects, locations"
+            className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+          />
         </div>
 
         <div className="mt-3 -mx-4 overflow-x-auto px-4">
           <div className="flex gap-2 pb-1">
-            {["All", "Plotting", "Township", "Villas", "Flats", "Farmhouses"].map((t, i) => (
-              <button key={t} className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold ${i === 0 ? "border-primary bg-primary/15 text-primary" : "border-border bg-surface text-muted-foreground"}`}>{t}</button>
-            ))}
+            {TABS.map((t) => {
+              const active = t === tab;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${active ? "border-primary bg-primary/15 text-primary" : "border-border bg-surface text-muted-foreground"}`}
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <SectionTitle title="Smart analytics" action={<Chip tone="primary"><TrendingUp className="h-3 w-3" />Live</Chip>} />
+        {filtered.length === 0 && (
+          <div className="card-soft p-6 text-center text-xs text-muted-foreground">
+            No projects in <b>{tab}</b>{search && <> matching "{search}"</>}.
+          </div>
+        )}
         <ul className="grid gap-3">
-          {projects.map((p) => (
+          {filtered.map((p) => (
             <li key={p.id} className="card-soft overflow-hidden">
               <div className="relative h-28" style={{ background: `linear-gradient(135deg, oklch(0.72 0.16 ${p.hue}), oklch(0.42 0.14 ${(p.hue + 50) % 360}))` }}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.18),transparent_60%)]" />
@@ -81,6 +144,13 @@ function Projects() {
                   <Metric icon={Repeat} v={p.revisits} l="Revisits" />
                 </div>
 
+                <button
+                  onClick={() => setSharing(buildShare(p))}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-indigo-700"
+                >
+                  <Send className="h-3.5 w-3.5" /> Send to Client
+                </button>
+
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{p.leads} active leads</span>
                   <div className="flex items-center gap-1.5">
@@ -95,6 +165,7 @@ function Projects() {
       </div>
 
       {editing && <ProjectBuilder project={editing} onClose={() => setEditing(null)} onSave={save} />}
+      {sharing && <SendToClientModal payload={sharing} onClose={() => setSharing(null)} />}
     </MobileShell>
   );
 }
