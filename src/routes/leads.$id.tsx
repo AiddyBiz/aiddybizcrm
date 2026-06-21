@@ -243,6 +243,17 @@ function LeadDetail() {
 }
 
 /* ---------- Quick Response Sheet (distinct from Follow-up) ---------- */
+const SHAREABLE_PROJECTS = [
+  { name: "Aiddy Green Acres", type: "Plotting", loc: "Devanahalli", price: "₹45 – 85L", config: "1200–2400 sqft" },
+  { name: "Lakeview Township", type: "Gated Township", loc: "Sarjapur", price: "₹1.2 – 2.4 Cr", config: "Villas + Plots" },
+  { name: "Sunrise Villas", type: "Villas", loc: "Whitefield", price: "₹2.5 – 4.1 Cr", config: "3,4 BHK" },
+  { name: "Palm Farmhouses", type: "Farmhouses", loc: "Nandi Hills", price: "₹65L – 1.1 Cr", config: "1 acre+" },
+];
+
+function projectShareText(p: { name: string; type: string; loc: string; price: string; config: string }, leadName: string) {
+  return `Hi ${leadName}, sharing details for *${p.name}* (${p.type})\n\n📍 ${p.loc}\n💰 ${p.price}\n🏠 ${p.config}\n\nLet me know if you'd like a site visit or brochure.`;
+}
+
 function QuickResponseSheet({ lead, phoneDigits, onClose, onSend }: { lead: Lead; phoneDigits: string; onClose: () => void; onSend: (label: string) => void }) {
   const RESPONSES = [
     { label: "Thanks for your interest", text: `Hi ${lead.name}, thanks for your interest in ${lead.campaign}! When is the best time for a quick call?` },
@@ -253,33 +264,59 @@ function QuickResponseSheet({ lead, phoneDigits, onClose, onSend }: { lead: Lead
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
-        <div className="flex items-center gap-3">
+      <div onClick={(e) => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="flex items-center gap-3 p-5 pb-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Zap className="h-5 w-5" /></span>
-          <h3 className="flex-1 text-sm font-semibold text-slate-900">Quick Response</h3>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-slate-900">Quick Response</h3>
+            <p className="text-xs text-slate-500">Send a one-tap message to {lead.name}</p>
+          </div>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-100"><X className="h-4 w-4" /></button>
         </div>
-        <p className="mt-1 text-xs text-slate-500">Send a one-tap message to {lead.name}</p>
-        <ul className="mt-4 space-y-2">
-          {RESPONSES.map((r) => (
-            <li key={r.label}>
-              <a
-                href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(r.text)}`}
-                target="_blank" rel="noreferrer"
-                onClick={() => onSend(r.label)}
-                className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50"
-              >
-                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#128C7E" }} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-slate-900">{r.label}</p>
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">{r.text}</p>
-                </div>
-                <Send className="mt-0.5 h-3.5 w-3.5 text-indigo-600" />
-              </a>
-            </li>
-          ))}
-        </ul>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
+          <ul className="space-y-2">
+            {RESPONSES.map((r) => (
+              <li key={r.label}>
+                <a
+                  href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(r.text)}`}
+                  target="_blank" rel="noreferrer"
+                  onClick={() => onSend(r.label)}
+                  className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50"
+                >
+                  <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#128C7E" }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-900">{r.label}</p>
+                    <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">{r.text}</p>
+                  </div>
+                  <Send className="mt-0.5 h-3.5 w-3.5 text-indigo-600" />
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Send a project to {lead.name}</p>
+          <ul className="mt-2 space-y-2">
+            {SHAREABLE_PROJECTS.map((p) => (
+              <li key={p.name}>
+                <a
+                  href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(projectShareText(p, lead.name))}`}
+                  target="_blank" rel="noreferrer"
+                  onClick={() => onSend(`Project: ${p.name}`)}
+                  className="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 hover:bg-indigo-50"
+                >
+                  <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-indigo-600 text-white">
+                    <Send className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-900">{p.name}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">{p.type} · {p.loc} · {p.price}</p>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
