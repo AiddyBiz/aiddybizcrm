@@ -27,14 +27,16 @@ function Visits() {
         {/* Flow strip */}
         <div className="card-soft p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Visit flow</p>
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-medium">
-            {["Lead", "Schedule", "Completed", "Outcome"].map((s, i) => (
-              <span key={s} className="flex items-center gap-2">
-                <span className={`grid h-7 w-7 place-items-center rounded-full ${i <= 2 ? "grad-primary text-primary-foreground" : "bg-surface-elevated text-muted-foreground"}`}>{i + 1}</span>
-                {s}
-                {i < 3 && <span className="text-muted-foreground">→</span>}
-              </span>
-            ))}
+          <div className="h-scroll -mx-4 mt-2 px-4">
+            <div className="flex w-max items-center gap-2 whitespace-nowrap text-[11px] font-medium">
+              {["Lead", "Schedule", "Completed", "Outcome"].map((s, i) => (
+                <span key={s} className="flex shrink-0 items-center gap-2">
+                  <span className={`grid h-7 w-7 place-items-center rounded-full ${i <= 2 ? "grad-primary text-primary-foreground" : "bg-surface-elevated text-muted-foreground"}`}>{i + 1}</span>
+                  {s}
+                  {i < 3 && <span className="text-muted-foreground">→</span>}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
