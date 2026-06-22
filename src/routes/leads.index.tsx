@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell, Chip, Avatar } from "@/components/mobile-shell";
-import { Search, SlidersHorizontal, Phone, MessageCircle, Flame, Plus } from "lucide-react";
+import { Search, SlidersHorizontal, Phone, MessageCircle, Flame, Plus, X, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LEADS } from "@/lib/leads-data";
 import { openQuickAdd } from "@/lib/quick-add-store";
@@ -11,12 +11,35 @@ export const Route = createFileRoute("/leads/")({
 });
 
 const TABS = ["All", "New", "Qualified", "Visit", "Negotiation", "Closed"];
+const PROJECTS = Array.from(new Set(LEADS.map((l) => l.project)));
+const SOURCES = Array.from(new Set(LEADS.map((l) => l.source)));
+const STAGES_ALL = ["New", "Qualified", "Visit", "Negotiation", "Closed"];
+const RANGES = [
+  { label: "All time", days: 0 },
+  { label: "Today", days: 1 },
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 30 days", days: 30 },
+];
+
+type Filters = { stages: string[]; projects: string[]; sources: string[]; days: number };
+const EMPTY: Filters = { stages: [], projects: [], sources: [], days: 0 };
 
 function Leads() {
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>(EMPTY);
+  const activeFilterCount = filters.stages.length + filters.projects.length + filters.sources.length + (filters.days > 0 ? 1 : 0);
+
   const filtered = useMemo(() => {
-    const base = tab === "All" ? LEADS : LEADS.filter((l) => l.stage === tab);
+    let base = tab === "All" ? LEADS : LEADS.filter((l) => l.stage === tab);
+    if (filters.stages.length) base = base.filter((l) => filters.stages.includes(l.stage));
+    if (filters.projects.length) base = base.filter((l) => filters.projects.includes(l.project));
+    if (filters.sources.length) base = base.filter((l) => filters.sources.includes(l.source));
+    if (filters.days > 0) {
+      const cutoff = Date.now() - filters.days * 86400000;
+      base = base.filter((l) => new Date(l.createdAt).getTime() >= cutoff);
+    }
     const term = q.trim().toLowerCase();
     if (!term) return base;
     return base.filter((l) =>
@@ -24,7 +47,7 @@ function Leads() {
       l.project.toLowerCase().includes(term) ||
       l.phone.includes(term)
     );
-  }, [tab, q]);
+  }, [tab, q, filters]);
 
   return (
     <MobileShell title="Leads">
@@ -34,7 +57,13 @@ function Leads() {
             <Search className="h-4 w-4 text-muted-foreground" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, phone, project" className="min-w-0 flex-1 bg-transparent text-sm placeholder:text-muted-foreground/60 focus:outline-none" />
           </div>
-          <button className="grid h-11 w-11 place-items-center rounded-2xl border border-border bg-surface"><SlidersHorizontal className="h-4 w-4" /></button>
+          <button onClick={() => setFilterOpen(true)} aria-label="Filter leads"
+            className="relative grid h-11 w-11 place-items-center rounded-2xl border border-border bg-surface">
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">{activeFilterCount}</span>
+            )}
+          </button>
           <button onClick={() => openQuickAdd("lead")} aria-label="Add lead"
             className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700">
             <Plus className="h-4 w-4" />
