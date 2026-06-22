@@ -27,12 +27,21 @@ const MENU_LINKS: Tab[] = [
 ];
 
 const QUICK_ACTIONS: { label: string; desc: string; icon: React.ComponentType<{ className?: string }>; type: QuickAddType }[] = [
-  { label: "Add Lead", desc: "Capture a new lead", icon: Users, type: "lead" },
-  { label: "Add Follow-up", desc: "Schedule a call or message", icon: PhoneCall, type: "followup" },
-  { label: "Schedule Site Visit", desc: "Book a property visit", icon: MapPin, type: "visit" },
-  { label: "Add Deal", desc: "Move lead to negotiation", icon: IndianRupee, type: "deal" },
-  { label: "Add Task", desc: "Personal to-do", icon: CheckSquare, type: "task" },
+  { label: "Add New Lead", desc: "Capture full customer details", icon: Users, type: "lead" },
+  { label: "Schedule Follow-up", desc: "Plan your next call or message", icon: PhoneCall, type: "followup" },
+  { label: "Log / Schedule Site Visit", desc: "Book a property visit", icon: MapPin, type: "visit" },
+  { label: "Create New Task", desc: "Personal to-do", icon: CheckSquare, type: "task" },
+  { label: "Log Call Details", desc: "Record an outbound/inbound call", icon: PhoneCall, type: "call" },
 ];
+
+const LEAD_STAGES = [
+  { v: "New",         tone: "bg-sky-100 text-sky-700 border-sky-200" },
+  { v: "Qualified",   tone: "bg-indigo-100 text-indigo-700 border-indigo-200" },
+  { v: "Visit",       tone: "bg-violet-100 text-violet-700 border-violet-200" },
+  { v: "Negotiation", tone: "bg-amber-100 text-amber-700 border-amber-200" },
+  { v: "Closed",      tone: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+];
+export { LEAD_STAGES };
 
 export function MobileShell({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
