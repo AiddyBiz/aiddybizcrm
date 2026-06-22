@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell, Avatar, Chip, SectionTitle, Tabs } from "@/components/mobile-shell";
+import { MissionDashboard } from "@/components/mission-dashboard";
 import { Pencil, Trophy, Zap, Flame, Target, Award, BookOpen, Gift, MapPin, TrendingUp, Star, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
