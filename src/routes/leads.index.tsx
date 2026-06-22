@@ -112,6 +112,82 @@ function Leads() {
           })}
         </ul>
       </div>
+
+      {filterOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center" onClick={() => setFilterOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl max-h-[85vh] overflow-y-auto">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-900">Filter leads</h3>
+              <button onClick={() => setFilterOpen(false)} className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            </div>
+
+            <FilterGroup title="Date">
+              <div className="flex flex-wrap gap-2">
+                {RANGES.map((r) => (
+                  <PillBtn key={r.label} active={filters.days === r.days}
+                    onClick={() => setFilters((f) => ({ ...f, days: r.days }))}>{r.label}</PillBtn>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="Status">
+              <div className="flex flex-wrap gap-2">
+                {STAGES_ALL.map((s) => (
+                  <PillBtn key={s} active={filters.stages.includes(s)}
+                    onClick={() => setFilters((f) => ({ ...f, stages: toggle(f.stages, s) }))}>{s}</PillBtn>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="Project">
+              <div className="flex flex-wrap gap-2">
+                {PROJECTS.map((p) => (
+                  <PillBtn key={p} active={filters.projects.includes(p)}
+                    onClick={() => setFilters((f) => ({ ...f, projects: toggle(f.projects, p) }))}>{p}</PillBtn>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="Source">
+              <div className="flex flex-wrap gap-2">
+                {SOURCES.map((s) => (
+                  <PillBtn key={s} active={filters.sources.includes(s)}
+                    onClick={() => setFilters((f) => ({ ...f, sources: toggle(f.sources, s) }))}>{s}</PillBtn>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setFilters(EMPTY)} className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Reset</button>
+              <button onClick={() => setFilterOpen(false)} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
     </MobileShell>
+  );
+}
+
+function toggle<T>(arr: T[], v: T): T[] {
+  return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
+}
+
+function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-4">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function PillBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick}
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+      {active && <Check className="h-3 w-3" />}
+      {children}
+    </button>
   );
 }
