@@ -176,42 +176,119 @@ function BottomItem({ to, label, icon: Icon, active }: { to: string; label: stri
 }
 
 /* ---------- Quick Add Modal ---------- */
+type FieldType = "text" | "tel" | "email" | "number" | "date" | "datetime-local" | "textarea" | "select";
+type FieldDef = { name: string; label: string; type?: FieldType; options?: string[]; required?: boolean; placeholder?: string };
+
+const QUICK_ADD_CONFIG: Record<QuickAddType, { title: string; icon: React.ComponentType<{ className?: string }>; goto: string; fields: FieldDef[] }> = {
+  lead: {
+    title: "Add New Lead", icon: Users, goto: "/leads",
+    fields: [
+      { name: "name", label: "Full name", required: true },
+      { name: "phone", label: "Phone", type: "tel", required: true },
+      { name: "email", label: "Email", type: "email" },
+      { name: "project", label: "Project of interest" },
+      { name: "budget", label: "Budget" },
+      { name: "stage", label: "Initial stage", type: "select", options: LEAD_STAGES.map((s) => s.v), required: true },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  followup: {
+    title: "Schedule Follow-up", icon: PhoneCall, goto: "/followups",
+    fields: [
+      { name: "lead", label: "Lead", required: true },
+      { name: "when", label: "Date & time", type: "datetime-local", required: true },
+      { name: "channel", label: "Channel", type: "select", options: ["Call", "WhatsApp", "Email", "In-person"], required: true },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  visit: {
+    title: "Log / Schedule Site Visit", icon: MapPin, goto: "/visits",
+    fields: [
+      { name: "lead", label: "Lead", required: true },
+      { name: "project", label: "Project", required: true },
+      { name: "when", label: "Date & time", type: "datetime-local", required: true },
+      { name: "address", label: "Site address" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  task: {
+    title: "Create New Task", icon: CheckSquare, goto: "/calendar",
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "due", label: "Due date", type: "date", required: true },
+      { name: "priority", label: "Priority", type: "select", options: ["Low", "Medium", "High"] },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  call: {
+    title: "Log Call Details", icon: PhoneCall, goto: "/leads",
+    fields: [
+      { name: "lead", label: "Lead", required: true },
+      { name: "direction", label: "Direction", type: "select", options: ["Outbound", "Inbound"], required: true },
+      { name: "outcome", label: "Outcome", type: "select", options: ["Connected", "No answer", "Voicemail", "Busy", "Wrong number"], required: true },
+      { name: "duration", label: "Duration (minutes)", type: "number" },
+      { name: "when", label: "When", type: "datetime-local" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+};
+
 function QuickAddModal({ type, onClose }: { type: QuickAddType; onClose: () => void }) {
   const navigate = useNavigate();
-  const cfg = {
-    lead:     { title: "Add New Lead",       icon: Users,      goto: "/leads",     fields: ["Full name", "Phone", "Project", "Budget"] },
-    followup: { title: "Schedule Follow-up", icon: PhoneCall,  goto: "/followups", fields: ["Lead", "Date & time", "Channel", "Notes"] },
-    visit:    { title: "Schedule Site Visit",icon: MapPin,     goto: "/visits",    fields: ["Lead", "Project", "Date & time", "Notes"] },
-    deal:     { title: "Add Deal",           icon: IndianRupee,goto: "/deals",     fields: ["Lead", "Project", "Deal value", "Stage"] },
-    task:     { title: "Add Task",           icon: CheckSquare,goto: "/calendar",  fields: ["Title", "Due date", "Priority", "Notes"] },
-  }[type];
+  const cfg = QUICK_ADD_CONFIG[type];
   const Icon = cfg.icon;
+  const [data, setData] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+  const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveQuickAddEntry(type, data);
+    setSaved(true);
+    setTimeout(() => { onClose(); navigate({ to: cfg.goto }); }, 700);
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Icon className="h-5 w-5" /></span>
           <h3 className="flex-1 text-base font-semibold text-slate-900">{cfg.title}</h3>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100"><X className="h-4 w-4" /></button>
         </div>
-        <form
-          onSubmit={(e) => { e.preventDefault(); onClose(); navigate({ to: cfg.goto }); }}
-          className="mt-4 space-y-3"
-        >
-          {cfg.fields.map((f) => (
-            <label key={f} className="block">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{f}</span>
-              <input
-                placeholder={f}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-              />
-            </label>
-          ))}
-          <button type="submit" className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700">
-            Save <ArrowRight className="h-4 w-4" />
-          </button>
-        </form>
+        {saved ? (
+          <div className="my-10 flex flex-col items-center gap-2 text-emerald-600">
+            <Check className="h-10 w-10" />
+            <p className="text-sm font-semibold">Saved successfully</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+            {cfg.fields.map((f) => (
+              <label key={f.name} className="block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{f.label}{f.required && <span className="text-red-500"> *</span>}</span>
+                {f.type === "textarea" ? (
+                  <textarea required={f.required} value={data[f.name] ?? ""} onChange={(e) => set(f.name, e.target.value)} rows={2}
+                    placeholder={f.placeholder ?? f.label}
+                    className="mt-1 w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+                ) : f.type === "select" ? (
+                  <select required={f.required} value={data[f.name] ?? ""} onChange={(e) => set(f.name, e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                    <option value="">Select…</option>
+                    {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input required={f.required} type={f.type ?? "text"} value={data[f.name] ?? ""} onChange={(e) => set(f.name, e.target.value)}
+                    placeholder={f.placeholder ?? f.label}
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+                )}
+              </label>
+            ))}
+            <button type="submit" className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700">
+              Save <ArrowRight className="h-4 w-4" />
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
