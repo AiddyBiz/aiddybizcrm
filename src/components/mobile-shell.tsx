@@ -1,12 +1,12 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2,
-  Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare, IndianRupee,
-  ArrowRight,
+  Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare,
+  ArrowRight, Check,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LEADS } from "@/lib/leads-data";
-import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, type QuickAddType } from "@/lib/quick-add-store";
+import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, saveQuickAddEntry, type QuickAddType } from "@/lib/quick-add-store";
 
 type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
