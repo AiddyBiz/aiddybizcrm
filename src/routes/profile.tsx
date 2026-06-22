@@ -76,8 +76,14 @@ function Profile() {
         </div>
 
         <div className="mt-5">
-          <Tabs tabs={["Overview", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
+          <Tabs tabs={["Overview", "Mission", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
         </div>
+
+        {tab === "Mission" && (
+          <div className="mt-4">
+            <MissionDashboard />
+          </div>
+        )}
 
         {tab === "Overview" && (
           <>
