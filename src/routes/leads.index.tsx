@@ -88,6 +88,8 @@ function Leads() {
         <ul className="mt-2 space-y-2">
           {filtered.map((l) => {
             const digits = l.phone.replace(/[^\d]/g, "");
+            const meta = getMeta(l.pipelineStatus);
+            const pal = progressPalette(l.pipelineStatus);
             return (
               <li key={l.id}>
                 <Link to="/leads/$id" params={{ id: l.id }} className="card-soft block p-3">
@@ -102,12 +104,20 @@ function Leads() {
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{l.phone}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Chip tone={l.stage === "Closed" ? "success" : l.stage === "Negotiation" ? "warning" : "info"}>{l.stage}</Chip>
+                      <span className={`inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-0.5 text-[10px] font-bold ${pal.chipBg} ${pal.text}`}>
+                        {l.pipelineStatus}
+                      </span>
                       <div className="flex gap-1.5">
                         <a href={`tel:${l.phone}`} onClick={(e) => e.stopPropagation()} className="grid h-8 w-8 place-items-center rounded-full bg-surface-elevated"><Phone className="h-3.5 w-3.5 text-primary" /></a>
                         <a href={`https://wa.me/${digits}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="grid h-8 w-8 place-items-center rounded-full bg-surface-elevated"><MessageCircle className="h-3.5 w-3.5 text-info" /></a>
                       </div>
                     </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className={`h-1.5 flex-1 overflow-hidden rounded-full ${pal.track}`}>
+                      <div className={`h-full ${pal.bar} transition-all`} style={{ width: `${meta.terminal ? 100 : Math.max(meta.pct, 4)}%` }} />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500">{meta.terminal ? "Lost" : `${meta.pct}%`}</span>
                   </div>
                 </Link>
               </li>
@@ -115,6 +125,7 @@ function Leads() {
           })}
         </ul>
       </div>
+
 
       {filterOpen && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center" onClick={() => setFilterOpen(false)}>
