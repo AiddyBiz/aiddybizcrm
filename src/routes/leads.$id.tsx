@@ -3,9 +3,16 @@ import {
   Phone, MessageCircle, Mail, ChevronLeft, Zap, Send, Clock,
   CheckCircle2, User2, Calendar as CalIcon, Pencil, X, Check,
   Paperclip, CheckCheck, Eye, FileText, Image as ImageIcon, MousePointerClick,
+  ArrowUpRight, ShieldAlert,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { getLead, type Lead as LeadData } from "@/lib/leads-data";
+import { updateLead as storeUpdateLead } from "@/lib/leads-store";
+import {
+  ALL_STATUSES, canTransition, getMeta, isTerminal, progressPalette,
+  type PipelineStatus,
+} from "@/lib/pipeline";
 
 export const Route = createFileRoute("/leads/$id")({
   head: () => ({ meta: [{ title: "Lead Detail — AiddyBiz CRM" }] }),
@@ -26,9 +33,17 @@ type Lead = {
   budget: string;
   propertyType: string;
   createdAt: string;
+  pipelineStatus: PipelineStatus;
+  lostFromStage?: PipelineStatus;
 };
 
-type TimelineEvent = { id: string; title: string; at: Date; kind: "create" | "assign" | "wait" | "call" | "msg" };
+type TimelineEvent = {
+  id: string;
+  title: string;
+  at: Date;
+  kind: "create" | "assign" | "wait" | "call" | "msg" | "system";
+  meta?: { from?: string; to?: string; fromPct?: number; toPct?: number };
+};
 
 type WhatsAppButton = { id: string; label: string; kind: "reply" | "url" | "call" };
 type Template = {
@@ -41,7 +56,7 @@ type Template = {
   status?: "sent" | "delivered" | "read";
 };
 
-const STATUS_OPTIONS = ["UNCONTACTED", "CONTACTED", "INTERESTED", "THINKING", "NOT INTERESTED", "WON", "LOST"];
+const STATUS_OPTIONS: string[] = ALL_STATUSES as string[];
 
 function fmt(d: Date) {
   return d.toLocaleString("en-IN", {
