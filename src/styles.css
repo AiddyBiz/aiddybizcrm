@@ -133,8 +133,9 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   touch-action: pan-y;
-  overflow-x: hidden;
 }
+html { overflow-x: clip; overflow-y: auto; height: auto; }
+body { overflow-x: clip; overflow-y: auto; min-height: 100vh; }
 /* Dedicated horizontal slider — confines horizontal swipes here */
 .h-scroll {
   overflow-x: auto;

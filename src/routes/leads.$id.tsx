@@ -3,9 +3,16 @@ import {
   Phone, MessageCircle, Mail, ChevronLeft, Zap, Send, Clock,
   CheckCircle2, User2, Calendar as CalIcon, Pencil, X, Check,
   Paperclip, CheckCheck, Eye, FileText, Image as ImageIcon, MousePointerClick,
+  ArrowUpRight, ShieldAlert,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { getLead, type Lead as LeadData } from "@/lib/leads-data";
+import { updateLead as storeUpdateLead } from "@/lib/leads-store";
+import {
+  ALL_STATUSES, canTransition, getMeta, isTerminal, progressPalette,
+  type PipelineStatus,
+} from "@/lib/pipeline";
 
 export const Route = createFileRoute("/leads/$id")({
   head: () => ({ meta: [{ title: "Lead Detail — AiddyBiz CRM" }] }),
@@ -26,9 +33,17 @@ type Lead = {
   budget: string;
   propertyType: string;
   createdAt: string;
+  pipelineStatus: PipelineStatus;
+  lostFromStage?: PipelineStatus;
 };
 
-type TimelineEvent = { id: string; title: string; at: Date; kind: "create" | "assign" | "wait" | "call" | "msg" };
+type TimelineEvent = {
+  id: string;
+  title: string;
+  at: Date;
+  kind: "create" | "assign" | "wait" | "call" | "msg" | "system";
+  meta?: { from?: string; to?: string; fromPct?: number; toPct?: number };
+};
 
 type WhatsAppButton = { id: string; label: string; kind: "reply" | "url" | "call" };
 type Template = {
@@ -41,7 +56,7 @@ type Template = {
   status?: "sent" | "delivered" | "read";
 };
 
-const STATUS_OPTIONS = ["UNCONTACTED", "CONTACTED", "INTERESTED", "THINKING", "NOT INTERESTED", "WON", "LOST"];
+const STATUS_OPTIONS: string[] = ALL_STATUSES as string[];
 
 function fmt(d: Date) {
   return d.toLocaleString("en-IN", {
@@ -68,11 +83,14 @@ function LeadDetail() {
           budget: initial.budget,
           propertyType: initial.propertyType,
           createdAt: fmt(new Date(initial.createdAt)),
+          pipelineStatus: initial.pipelineStatus,
+          lostFromStage: initial.lostFromStage,
         }
       : {
           id, name: "Unknown Lead", phone: "+910000000000", email: "—",
           status: "UNCONTACTED", source: "—", campaign: "—",
           budget: "—", propertyType: "—", createdAt: fmt(new Date()),
+          pipelineStatus: "New Lead" as PipelineStatus,
         }
   );
 
@@ -91,8 +109,32 @@ function LeadDetail() {
     [timeline]
   );
 
-  function logEvent(title: string, kind: TimelineEvent["kind"]) {
-    setTimeline((t) => [...t, { id: crypto.randomUUID(), title, at: new Date(), kind }]);
+  function logEvent(title: string, kind: TimelineEvent["kind"], meta?: TimelineEvent["meta"]) {
+    setTimeline((t) => [...t, { id: crypto.randomUUID(), title, at: new Date(), kind, meta }]);
+  }
+
+  function handleStatusChange(next: PipelineStatus) {
+    const current = lead.pipelineStatus;
+    if (current === next) return;
+    const check = canTransition(current, next);
+    if (!check.ok) {
+      toast.error(check.reason ?? "Invalid status change", {
+        description: `${current} → ${next} is not allowed.`,
+      });
+      return;
+    }
+    const from = getMeta(current);
+    const to = getMeta(next);
+    const patch: Partial<Lead> = { pipelineStatus: next };
+    if (isTerminal(next) && !isTerminal(current)) patch.lostFromStage = current;
+    setLead((l) => ({ ...l, ...patch }));
+    storeUpdateLead(lead.id, patch);
+    toast.success(`Status updated to ${next}`, { description: `${to.pct}% pipeline completion` });
+    logEvent(
+      `System updated status from ${current} (${from.pct}%) to ${next} (${to.pct}%)`,
+      "system",
+      { from: current, to: next, fromPct: from.pct, toPct: to.pct }
+    );
   }
 
   const phoneDigits = lead.phone.replace(/[^\d]/g, "");
@@ -153,12 +195,19 @@ function LeadDetail() {
           <div className="space-y-3">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <EditableSelect
-                label="STATUS"
-                value={lead.status}
+                label="PIPELINE STATUS"
+                value={lead.pipelineStatus}
                 options={STATUS_OPTIONS}
-                onChange={(v) => { setLead({ ...lead, status: v }); logEvent(`Status changed to ${v}`, "assign"); }}
-                leading={<span className="h-2 w-2 rounded-full bg-purple-500" />}
+                onChange={(v) => handleStatusChange(v as PipelineStatus)}
+                leading={<span className={`h-2 w-2 rounded-full ${progressPalette(lead.pipelineStatus).bar}`} />}
               />
+              <PipelineBar status={lead.pipelineStatus} className="mt-3" />
+              {lead.lostFromStage && isTerminal(lead.pipelineStatus) && (
+                <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-red-600">
+                  <ShieldAlert className="h-3 w-3" />
+                  Lost from: <span className="font-bold">{lead.lostFromStage}</span>
+                </p>
+              )}
               <div className="mt-3 border-t border-slate-100 pt-3 flex items-center justify-between">
                 <span className="text-[11px] font-semibold tracking-wider text-slate-500">FOLLOW UP</span>
                 <button onClick={() => setShowFollowUp(true)} className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:underline">
@@ -167,7 +216,7 @@ function LeadDetail() {
                 </button>
               </div>
               <div className="mt-3 border-t border-slate-100 pt-3">
-                <EditableText label="OPPORTUNITY SIZE" value={lead.budget} onChange={(v) => setLead({ ...lead, budget: v })} />
+                <EditableText label="OPPORTUNITY SIZE" value={lead.budget} onChange={(v) => { setLead({ ...lead, budget: v }); storeUpdateLead(lead.id, { budget: v }); }} />
               </div>
             </div>
 
@@ -413,6 +462,28 @@ function EditableRow({ label, value, onChange, readOnly }: { label: string; valu
   );
 }
 
+/* ---------- Pipeline Progress Bar ---------- */
+function PipelineBar({ status, className = "" }: { status: PipelineStatus; className?: string }) {
+  const meta = getMeta(status);
+  const pal = progressPalette(status);
+  const width = meta.terminal ? 100 : Math.max(meta.pct, 4);
+  return (
+    <div className={className}>
+      <div className="mb-1 flex items-center justify-between">
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${pal.chipBg} ${pal.text}`}>
+          {status}
+        </span>
+        <span className="text-[11px] font-bold text-slate-700">
+          {meta.terminal ? "Lost" : `${meta.pct}%`}
+        </span>
+      </div>
+      <div className={`h-2 overflow-hidden rounded-full ${pal.track}`}>
+        <div className={`h-full ${pal.bar} transition-all duration-500`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Timeline ---------- */
 function Timeline({ events }: { events: TimelineEvent[] }) {
   const iconFor = (k: TimelineEvent["kind"]) => {
@@ -421,21 +492,30 @@ function Timeline({ events }: { events: TimelineEvent[] }) {
       case "assign": return <User2 className="h-3.5 w-3.5 text-indigo-600" />;
       case "call":   return <Phone className="h-3.5 w-3.5 text-emerald-600" />;
       case "msg":    return <MessageCircle className="h-3.5 w-3.5 text-[#128C7E]" />;
+      case "system": return <ArrowUpRight className="h-3.5 w-3.5 text-indigo-600" />;
       default:       return <Clock className="h-3.5 w-3.5 text-amber-600" />;
     }
   };
   return (
     <ol className="relative ml-3 border-l-2 border-slate-200">
-      {events.map((e, i) => (
-        <li key={e.id} className="relative pl-5 pb-5">
-          <span className="absolute -left-[11px] top-0 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-100 shadow-sm">{iconFor(e.kind)}</span>
-          <div className="rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-xs font-medium text-slate-800">{e.title}</p>
-            <p className="mt-1 text-[11px] text-slate-500">{fmt(e.at)}</p>
-          </div>
-          {i === 0 && <span className="absolute -left-[5px] top-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
-        </li>
-      ))}
+      {events.map((e, i) => {
+        const isSystem = e.kind === "system";
+        return (
+          <li key={e.id} className="relative pl-5 pb-5">
+            <span className={`absolute -left-[11px] top-0 grid h-5 w-5 place-items-center rounded-full border-2 border-white shadow-sm ${isSystem ? "bg-indigo-100" : "bg-slate-100"}`}>{iconFor(e.kind)}</span>
+            <div className={`rounded-xl border p-3 ${isSystem ? "border-indigo-200 bg-indigo-50/60" : "border-slate-200 bg-white"}`}>
+              {isSystem && (
+                <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                  <ArrowUpRight className="h-2.5 w-2.5" /> System
+                </span>
+              )}
+              <p className="text-xs font-medium text-slate-800">{e.title}</p>
+              <p className="mt-1 text-[11px] text-slate-500">{fmt(e.at)}</p>
+            </div>
+            {i === 0 && <span className="absolute -left-[5px] top-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
+          </li>
+        );
+      })}
     </ol>
   );
 }
