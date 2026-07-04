@@ -50,7 +50,7 @@ function Leads() {
       l.project.toLowerCase().includes(term) ||
       l.phone.includes(term)
     );
-  }, [tab, q, filters]);
+  }, [tab, q, filters, allLeads]);
 
   return (
     <MobileShell title="Leads">
