@@ -83,11 +83,14 @@ function LeadDetail() {
           budget: initial.budget,
           propertyType: initial.propertyType,
           createdAt: fmt(new Date(initial.createdAt)),
+          pipelineStatus: initial.pipelineStatus,
+          lostFromStage: initial.lostFromStage,
         }
       : {
           id, name: "Unknown Lead", phone: "+910000000000", email: "—",
           status: "UNCONTACTED", source: "—", campaign: "—",
           budget: "—", propertyType: "—", createdAt: fmt(new Date()),
+          pipelineStatus: "New Lead" as PipelineStatus,
         }
   );
 
