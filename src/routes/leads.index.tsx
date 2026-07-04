@@ -3,6 +3,8 @@ import { MobileShell, Chip, Avatar } from "@/components/mobile-shell";
 import { Search, SlidersHorizontal, Phone, MessageCircle, Flame, Plus, X, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LEADS } from "@/lib/leads-data";
+import { useLeads } from "@/lib/leads-store";
+import { getMeta, progressPalette } from "@/lib/pipeline";
 import { openQuickAdd } from "@/lib/quick-add-store";
 
 export const Route = createFileRoute("/leads/")({
@@ -25,6 +27,7 @@ type Filters = { stages: string[]; projects: string[]; sources: string[]; days: 
 const EMPTY: Filters = { stages: [], projects: [], sources: [], days: 0 };
 
 function Leads() {
+  const allLeads = useLeads();
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -32,7 +35,7 @@ function Leads() {
   const activeFilterCount = filters.stages.length + filters.projects.length + filters.sources.length + (filters.days > 0 ? 1 : 0);
 
   const filtered = useMemo(() => {
-    let base = tab === "All" ? LEADS : LEADS.filter((l) => l.stage === tab);
+    let base = tab === "All" ? allLeads : allLeads.filter((l) => l.stage === tab);
     if (filters.stages.length) base = base.filter((l) => filters.stages.includes(l.stage));
     if (filters.projects.length) base = base.filter((l) => filters.projects.includes(l.project));
     if (filters.sources.length) base = base.filter((l) => filters.sources.includes(l.source));
