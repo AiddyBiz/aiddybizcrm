@@ -462,6 +462,28 @@ function EditableRow({ label, value, onChange, readOnly }: { label: string; valu
   );
 }
 
+/* ---------- Pipeline Progress Bar ---------- */
+function PipelineBar({ status, className = "" }: { status: PipelineStatus; className?: string }) {
+  const meta = getMeta(status);
+  const pal = progressPalette(status);
+  const width = meta.terminal ? 100 : Math.max(meta.pct, 4);
+  return (
+    <div className={className}>
+      <div className="mb-1 flex items-center justify-between">
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${pal.chipBg} ${pal.text}`}>
+          {status}
+        </span>
+        <span className="text-[11px] font-bold text-slate-700">
+          {meta.terminal ? "Lost" : `${meta.pct}%`}
+        </span>
+      </div>
+      <div className={`h-2 overflow-hidden rounded-full ${pal.track}`}>
+        <div className={`h-full ${pal.bar} transition-all duration-500`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Timeline ---------- */
 function Timeline({ events }: { events: TimelineEvent[] }) {
   const iconFor = (k: TimelineEvent["kind"]) => {
@@ -470,21 +492,30 @@ function Timeline({ events }: { events: TimelineEvent[] }) {
       case "assign": return <User2 className="h-3.5 w-3.5 text-indigo-600" />;
       case "call":   return <Phone className="h-3.5 w-3.5 text-emerald-600" />;
       case "msg":    return <MessageCircle className="h-3.5 w-3.5 text-[#128C7E]" />;
+      case "system": return <ArrowUpRight className="h-3.5 w-3.5 text-indigo-600" />;
       default:       return <Clock className="h-3.5 w-3.5 text-amber-600" />;
     }
   };
   return (
     <ol className="relative ml-3 border-l-2 border-slate-200">
-      {events.map((e, i) => (
-        <li key={e.id} className="relative pl-5 pb-5">
-          <span className="absolute -left-[11px] top-0 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-100 shadow-sm">{iconFor(e.kind)}</span>
-          <div className="rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-xs font-medium text-slate-800">{e.title}</p>
-            <p className="mt-1 text-[11px] text-slate-500">{fmt(e.at)}</p>
-          </div>
-          {i === 0 && <span className="absolute -left-[5px] top-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
-        </li>
-      ))}
+      {events.map((e, i) => {
+        const isSystem = e.kind === "system";
+        return (
+          <li key={e.id} className="relative pl-5 pb-5">
+            <span className={`absolute -left-[11px] top-0 grid h-5 w-5 place-items-center rounded-full border-2 border-white shadow-sm ${isSystem ? "bg-indigo-100" : "bg-slate-100"}`}>{iconFor(e.kind)}</span>
+            <div className={`rounded-xl border p-3 ${isSystem ? "border-indigo-200 bg-indigo-50/60" : "border-slate-200 bg-white"}`}>
+              {isSystem && (
+                <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                  <ArrowUpRight className="h-2.5 w-2.5" /> System
+                </span>
+              )}
+              <p className="text-xs font-medium text-slate-800">{e.title}</p>
+              <p className="mt-1 text-[11px] text-slate-500">{fmt(e.at)}</p>
+            </div>
+            {i === 0 && <span className="absolute -left-[5px] top-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
+          </li>
+        );
+      })}
     </ol>
   );
 }
