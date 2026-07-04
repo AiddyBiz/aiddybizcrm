@@ -1,3 +1,5 @@
+import type { PipelineStatus } from "./pipeline";
+
 export type LeadStage = "New" | "Qualified" | "Visit" | "Negotiation" | "Closed";
 
 export type Lead = {
@@ -15,6 +17,8 @@ export type Lead = {
   propertyType: string;
   status: string;
   createdAt: string;
+  pipelineStatus: PipelineStatus;
+  lostFromStage?: PipelineStatus;
 };
 
 export const LEADS: Lead[] = [
@@ -24,6 +28,7 @@ export const LEADS: Lead[] = [
     source: "Facebook Lead", campaign: "Prestige Lakeside Premium Apartments",
     propertyType: "3 BHK Apartment", status: "CONTACTED",
     createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    pipelineStatus: "Interested",
   },
   {
     id: "2", name: "Rohan Mehta", phone: "+919876543244", email: "rohan.mehta@example.com",
@@ -31,6 +36,7 @@ export const LEADS: Lead[] = [
     source: "Google Ads", campaign: "Sobha Dream Acres Launch",
     propertyType: "2 BHK Apartment", status: "UNCONTACTED",
     createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    pipelineStatus: "Call Connected",
   },
   {
     id: "3", name: "Kavya Iyer", phone: "+919001234508", email: "kavya.iyer@example.com",
@@ -38,6 +44,7 @@ export const LEADS: Lead[] = [
     source: "Channel Partner", campaign: "Brigade Cornerstone Villas",
     propertyType: "Villa", status: "INTERESTED",
     createdAt: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
+    pipelineStatus: "Site Visit Scheduled",
   },
   {
     id: "4", name: "Karthik Reddy", phone: "+918812345691", email: "karthik.reddy@example.com",
@@ -45,6 +52,7 @@ export const LEADS: Lead[] = [
     source: "Website", campaign: "Godrej Splendour Phase 2",
     propertyType: "2 BHK Apartment", status: "UNCONTACTED",
     createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    pipelineStatus: "New Lead",
   },
   {
     id: "5", name: "Priya Nair", phone: "+918012345633", email: "priya.nair@example.com",
@@ -52,6 +60,7 @@ export const LEADS: Lead[] = [
     source: "Referral", campaign: "Prestige Lakeside Premium Apartments",
     propertyType: "3 BHK Apartment", status: "THINKING",
     createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    pipelineStatus: "Negotiation",
   },
   {
     id: "6", name: "Vikram Singh", phone: "+917012345617", email: "vikram.singh@example.com",
@@ -59,6 +68,7 @@ export const LEADS: Lead[] = [
     source: "Facebook Lead", campaign: "Embassy Edge Plots",
     propertyType: "Residential Plot", status: "UNCONTACTED",
     createdAt: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
+    pipelineStatus: "Call Not Connected",
   },
 ];
 

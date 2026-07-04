@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LEADS } from "@/lib/leads-data";
+import { addLead } from "@/lib/leads-store";
+import { ALL_STATUSES, type PipelineStatus } from "@/lib/pipeline";
 import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, saveQuickAddEntry, type QuickAddType } from "@/lib/quick-add-store";
 
 type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
@@ -81,7 +83,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
 
       <nav className="fixed inset-x-0 bottom-0 z-30 h-16 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
-          <BottomItem to="/" label="Home" icon={Home} active={pathname === "/" || pathname.startsWith("/dashboard")} />
+          <BottomItem to="/dashboard" label="Home" icon={Home} active={pathname === "/dashboard" || pathname.startsWith("/dashboard")} />
           <BottomItem to="/leads" label="Leads" icon={Users} active={isActive("/leads")} />
           <li className="flex items-center justify-center">
             <button
@@ -188,7 +190,8 @@ const QUICK_ADD_CONFIG: Record<QuickAddType, { title: string; icon: React.Compon
       { name: "email", label: "Email", type: "email" },
       { name: "project", label: "Project of interest" },
       { name: "budget", label: "Budget" },
-      { name: "stage", label: "Initial stage", type: "select", options: LEAD_STAGES.map((s) => s.v), required: true },
+      { name: "source", label: "Source", type: "select", options: ["Facebook Lead", "Google Ads", "Website", "Referral", "Channel Partner", "Walk-in", "Manual"] },
+      { name: "pipelineStatus", label: "Pipeline status", type: "select", options: ALL_STATUSES as string[], required: true },
       { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
@@ -244,6 +247,33 @@ function QuickAddModal({ type, onClose }: { type: QuickAddType; onClose: () => v
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveQuickAddEntry(type, data);
+    if (type === "lead") {
+      const now = new Date().toISOString();
+      const ps = (data.pipelineStatus as PipelineStatus) || "New Lead";
+      const stage: import("@/lib/leads-data").LeadStage =
+        ps === "Closure" || ps === "Booking" ? "Closed"
+        : ps === "Negotiation" ? "Negotiation"
+        : ps === "Site Visit Scheduled" || ps === "Site Visit Done" ? "Visit"
+        : ps === "Interested" || ps === "Brochure Sent" || ps === "Call Back" ? "Qualified"
+        : "New";
+      addLead({
+        id: `L${Date.now()}`,
+        name: data.name || "New Lead",
+        phone: data.phone || "",
+        email: data.email || "",
+        project: data.project || "—",
+        budget: data.budget || "—",
+        stage,
+        score: 60,
+        hot: false,
+        source: data.source || "Manual",
+        campaign: data.project || "Direct",
+        propertyType: "—",
+        status: "UNCONTACTED",
+        createdAt: now,
+        pipelineStatus: ps,
+      });
+    }
     setSaved(true);
     setTimeout(() => { onClose(); navigate({ to: cfg.goto }); }, 700);
   };
