@@ -109,8 +109,32 @@ function LeadDetail() {
     [timeline]
   );
 
-  function logEvent(title: string, kind: TimelineEvent["kind"]) {
-    setTimeline((t) => [...t, { id: crypto.randomUUID(), title, at: new Date(), kind }]);
+  function logEvent(title: string, kind: TimelineEvent["kind"], meta?: TimelineEvent["meta"]) {
+    setTimeline((t) => [...t, { id: crypto.randomUUID(), title, at: new Date(), kind, meta }]);
+  }
+
+  function handleStatusChange(next: PipelineStatus) {
+    const current = lead.pipelineStatus;
+    if (current === next) return;
+    const check = canTransition(current, next);
+    if (!check.ok) {
+      toast.error(check.reason ?? "Invalid status change", {
+        description: `${current} → ${next} is not allowed.`,
+      });
+      return;
+    }
+    const from = getMeta(current);
+    const to = getMeta(next);
+    const patch: Partial<Lead> = { pipelineStatus: next };
+    if (isTerminal(next) && !isTerminal(current)) patch.lostFromStage = current;
+    setLead((l) => ({ ...l, ...patch }));
+    storeUpdateLead(lead.id, patch);
+    toast.success(`Status updated to ${next}`, { description: `${to.pct}% pipeline completion` });
+    logEvent(
+      `System updated status from ${current} (${from.pct}%) to ${next} (${to.pct}%)`,
+      "system",
+      { from: current, to: next, fromPct: from.pct, toPct: to.pct }
+    );
   }
 
   const phoneDigits = lead.phone.replace(/[^\d]/g, "");
@@ -171,12 +195,19 @@ function LeadDetail() {
           <div className="space-y-3">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <EditableSelect
-                label="STATUS"
-                value={lead.status}
+                label="PIPELINE STATUS"
+                value={lead.pipelineStatus}
                 options={STATUS_OPTIONS}
-                onChange={(v) => { setLead({ ...lead, status: v }); logEvent(`Status changed to ${v}`, "assign"); }}
-                leading={<span className="h-2 w-2 rounded-full bg-purple-500" />}
+                onChange={(v) => handleStatusChange(v as PipelineStatus)}
+                leading={<span className={`h-2 w-2 rounded-full ${progressPalette(lead.pipelineStatus).bar}`} />}
               />
+              <PipelineBar status={lead.pipelineStatus} className="mt-3" />
+              {lead.lostFromStage && isTerminal(lead.pipelineStatus) && (
+                <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-red-600">
+                  <ShieldAlert className="h-3 w-3" />
+                  Lost from: <span className="font-bold">{lead.lostFromStage}</span>
+                </p>
+              )}
               <div className="mt-3 border-t border-slate-100 pt-3 flex items-center justify-between">
                 <span className="text-[11px] font-semibold tracking-wider text-slate-500">FOLLOW UP</span>
                 <button onClick={() => setShowFollowUp(true)} className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:underline">
@@ -185,7 +216,7 @@ function LeadDetail() {
                 </button>
               </div>
               <div className="mt-3 border-t border-slate-100 pt-3">
-                <EditableText label="OPPORTUNITY SIZE" value={lead.budget} onChange={(v) => setLead({ ...lead, budget: v })} />
+                <EditableText label="OPPORTUNITY SIZE" value={lead.budget} onChange={(v) => { setLead({ ...lead, budget: v }); storeUpdateLead(lead.id, { budget: v }); }} />
               </div>
             </div>
 
