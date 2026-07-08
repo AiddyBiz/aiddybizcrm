@@ -83,7 +83,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
 
       <nav className="fixed inset-x-0 bottom-0 z-30 h-16 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
-          <BottomItem to="/dashboard" label="Home" icon={Home} active={pathname === "/dashboard" || pathname.startsWith("/dashboard")} />
+          <BottomItem to="/dashboard" label="Home" icon={Home} active={pathname === "/" || pathname === "/dashboard" || pathname.startsWith("/dashboard")} />
           <BottomItem to="/leads" label="Leads" icon={Users} active={isActive("/leads")} />
           <li className="flex items-center justify-center">
             <button

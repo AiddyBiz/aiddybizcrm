@@ -29,7 +29,7 @@ function makeActivity(n: number): number[] {
   });
 }
 
-function Dashboard() {
+export function Dashboard() {
   const [range, setRange] = useState<"7d" | "month">("7d");
   const days = range === "7d" ? 7 : 30;
   const activity = useMemo(() => makeActivity(days), [days]);
