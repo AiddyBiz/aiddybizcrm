@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Dashboard } from "./dashboard";
+import { DashboardScreen } from "@/components/dashboard-screen";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -9,5 +9,5 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Your real estate CRM dashboard for leads, follow-ups and deals." },
     ],
   }),
-  component: Dashboard,
+  component: DashboardScreen,
 });
