@@ -1,142 +1,187 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
-export interface AuthUser {
+export type AppRole = "SUPER_ADMIN" | "WORKSPACE_ADMIN" | "AGENT";
+
+export interface Profile {
   id: string;
-  email: string;
-  name?: string;
-  role?: "admin" | "manager" | "agent" | "partner";
-  avatar?: string;
+  full_name: string | null;
+  role: AppRole;
+  workspace_id: string | null;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  created_at: string;
 }
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
+  workspace: Workspace | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  refresh: () => Promise<void>;
   clearError: () => void;
-  updateProfile: (patch: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "aiddybiz_auth_user";
+async function loadProfileAndWorkspace(
+  userId: string,
+): Promise<{ profile: Profile | null; workspace: Workspace | null }> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, full_name, role, workspace_id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  let workspace: Workspace | null = null;
+  if (profile?.workspace_id) {
+    const { data: ws } = await supabase
+      .from("workspaces")
+      .select("id, name, created_at")
+      .eq("id", profile.workspace_id)
+      .maybeSingle();
+    workspace = (ws as Workspace | null) ?? null;
+  }
+  return { profile: (profile as Profile | null) ?? null, workspace };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Restore session from client storage on mount only.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw) as AuthUser);
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
+  const hydrate = useCallback(async (nextSession: Session | null) => {
+    setSession(nextSession);
+    if (!nextSession?.user) {
+      setProfile(null);
+      setWorkspace(null);
+      return;
     }
+    const { profile: p, workspace: w } = await loadProfileAndWorkspace(nextSession.user.id);
+    setProfile(p);
+    setWorkspace(w);
   }, []);
 
-  const persist = (next: AuthUser | null) => {
-    setUser(next);
-    if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(STORAGE_KEY);
-  };
+  useEffect(() => {
+    // Register listener first, then read initial session.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      // Defer async work to avoid deadlocks inside the callback.
+      setTimeout(() => {
+        void hydrate(next);
+      }, 0);
+    });
+
+    void supabase.auth.getSession().then(({ data }) => {
+      void hydrate(data.session).finally(() => setIsLoading(false));
+    });
+
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, [hydrate]);
 
   const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
     setError(null);
-    try {
-      // TODO: replace with real backend call (Lovable Cloud / Supabase auth).
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      if (password.length < 6) throw new Error("Invalid credentials.");
-
-      const next: AuthUser = {
-        id: crypto.randomUUID(),
-        email: email.toLowerCase().trim(),
-        name: email.split("@")[0],
-        role: "agent",
-      };
-      persist(next);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign in failed.";
-      setError(message);
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    if (err) {
+      setError(err.message);
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, name?: string) => {
-    setIsLoading(true);
+  const signUp = async (email: string, password: string, fullName?: string) => {
     setError(null);
-    try {
-      // TODO: replace with real backend call.
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      if (password.length < 6) throw new Error("Password must be at least 6 characters.");
-
-      const next: AuthUser = {
-        id: crypto.randomUUID(),
-        email: email.toLowerCase().trim(),
-        name: name || email.split("@")[0],
-        role: "agent",
-      };
-      persist(next);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign up failed.";
-      setError(message);
+    const redirectTo =
+      typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined;
+    const { error: err } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: fullName ? { full_name: fullName } : undefined,
+        emailRedirectTo: redirectTo,
+      },
+    });
+    if (err) {
+      setError(err.message);
       throw err;
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setError(null);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: typeof window !== "undefined" ? window.location.origin : undefined,
+    });
+    if (result.error) {
+      const msg = result.error instanceof Error ? result.error.message : String(result.error);
+      setError(msg);
+      throw result.error;
     }
   };
 
   const signOut = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: replace with real backend sign-out.
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      persist(null);
-    } finally {
-      setIsLoading(false);
-    }
+    await supabase.auth.signOut();
+    setProfile(null);
+    setWorkspace(null);
+    setSession(null);
   };
 
-  const updateProfile = (patch: Partial<AuthUser>) => {
-    if (!user) return;
-    const next = { ...user, ...patch };
-    persist(next);
+  const refresh = async () => {
+    if (!session?.user) return;
+    const { profile: p, workspace: w } = await loadProfileAndWorkspace(session.user.id);
+    setProfile(p);
+    setWorkspace(w);
   };
 
-  const clearError = () => setError(null);
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        error,
-        signIn,
-        signUp,
-        signOut,
-        clearError,
-        updateProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      session,
+      user: session?.user ?? null,
+      profile,
+      workspace,
+      isLoading,
+      isAuthenticated: !!session,
+      error,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signOut,
+      refresh,
+      clearError: () => setError(null),
+    }),
+    [session, profile, workspace, isLoading, error],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider.");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }
