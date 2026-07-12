@@ -12,7 +12,7 @@ import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, saveQuickAd
 import { useAuth } from "@/lib/AuthContext";
 import { useFeatures, type FeatureKey } from "@/lib/features";
 
-type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; feature?: FeatureKey; roles?: string[] };
 
 const MENU_LINKS: Tab[] = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
@@ -21,13 +21,15 @@ const MENU_LINKS: Tab[] = [
   { to: "/visits", label: "Site Visits", icon: MapPin },
   { to: "/projects", label: "Projects", icon: Building2 },
   { to: "/calendar", label: "Calendar", icon: Calendar },
-  { to: "/deals", label: "Deals", icon: Handshake },
-  { to: "/rankings", label: "Rankings", icon: Trophy },
-  { to: "/learning", label: "Learning Zone", icon: GraduationCap },
+  { to: "/deals", label: "Deals", icon: Handshake, feature: "deals" },
+  { to: "/rankings", label: "Rankings", icon: Trophy, feature: "rankings" },
+  { to: "/learning", label: "Learning Zone", icon: GraduationCap, feature: "learning" },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
-  { to: "/subscription", label: "Subscription", icon: CreditCard },
-  { to: "/refer", label: "Refer & Earn", icon: Gift },
+  { to: "/team", label: "Team", icon: UsersRound, roles: ["WORKSPACE_ADMIN", "SUPER_ADMIN"] },
+  { to: "/subscription", label: "Subscription", icon: CreditCard, feature: "billing" },
+  { to: "/refer", label: "Refer & Earn", icon: Gift, feature: "referrals" },
+  { to: "/super-admin", label: "Super Admin", icon: Shield, roles: ["SUPER_ADMIN"] },
 ];
 
 const QUICK_ACTIONS: { label: string; desc: string; icon: React.ComponentType<{ className?: string }>; type: QuickAddType }[] = [
