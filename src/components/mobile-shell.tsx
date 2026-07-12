@@ -2,15 +2,17 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2,
   Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare,
-  ArrowRight, Check,
+  ArrowRight, Check, Shield, UsersRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LEADS } from "@/lib/leads-data";
 import { addLead } from "@/lib/leads-store";
 import { ALL_STATUSES, type PipelineStatus } from "@/lib/pipeline";
 import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, saveQuickAddEntry, type QuickAddType } from "@/lib/quick-add-store";
+import { useAuth } from "@/lib/AuthContext";
+import { useFeatures, type FeatureKey } from "@/lib/features";
 
-type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; feature?: FeatureKey; roles?: string[] };
 
 const MENU_LINKS: Tab[] = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
@@ -19,13 +21,15 @@ const MENU_LINKS: Tab[] = [
   { to: "/visits", label: "Site Visits", icon: MapPin },
   { to: "/projects", label: "Projects", icon: Building2 },
   { to: "/calendar", label: "Calendar", icon: Calendar },
-  { to: "/deals", label: "Deals", icon: Handshake },
-  { to: "/rankings", label: "Rankings", icon: Trophy },
-  { to: "/learning", label: "Learning Zone", icon: GraduationCap },
+  { to: "/deals", label: "Deals", icon: Handshake, feature: "deals" },
+  { to: "/rankings", label: "Rankings", icon: Trophy, feature: "rankings" },
+  { to: "/learning", label: "Learning Zone", icon: GraduationCap, feature: "learning" },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
-  { to: "/subscription", label: "Subscription", icon: CreditCard },
-  { to: "/refer", label: "Refer & Earn", icon: Gift },
+  { to: "/team", label: "Team", icon: UsersRound, roles: ["WORKSPACE_ADMIN", "SUPER_ADMIN"] },
+  { to: "/subscription", label: "Subscription", icon: CreditCard, feature: "billing" },
+  { to: "/refer", label: "Refer & Earn", icon: Gift, feature: "referrals" },
+  { to: "/super-admin", label: "Super Admin", icon: Shield, roles: ["SUPER_ADMIN"] },
 ];
 
 const QUICK_ACTIONS: { label: string; desc: string; icon: React.ComponentType<{ className?: string }>; type: QuickAddType }[] = [
@@ -51,6 +55,25 @@ export function MobileShell({ title, children, action }: { title: string; childr
   const [fabOpen, setFabOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState<QuickAddType | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { enabled: features } = useFeatures();
+
+  const visibleLinks = useMemo(
+    () =>
+      MENU_LINKS.filter((l) => {
+        if (l.roles && !l.roles.includes(profile?.role ?? "")) return false;
+        if (l.feature && !features[l.feature]) return false;
+        return true;
+      }),
+    [profile?.role, features],
+  );
+
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   useEffect(() => onQuickAdd((t) => setQuickAdd(t)), []);
   useEffect(() => onGlobalSearch(() => setSearchOpen(true)), []);
@@ -144,7 +167,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
               <button onClick={() => setMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-md hover:bg-slate-100"><X className="h-4 w-4" /></button>
             </div>
             <ul className="space-y-0.5">
-              {MENU_LINKS.map((l) => {
+              {visibleLinks.map((l) => {
                 const active = pathname === l.to || (l.to !== "/dashboard" && pathname.startsWith(l.to));
                 return (
                   <li key={l.to}>
@@ -155,7 +178,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
                 );
               })}
             </ul>
-            <Link to="/" onClick={() => setMenuOpen(false)} className="mt-6 block rounded-md border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50">Sign out</Link>
+            <button onClick={handleSignOut} className="mt-6 block w-full rounded-md border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50">Sign out</button>
           </aside>
         </div>
       )}
