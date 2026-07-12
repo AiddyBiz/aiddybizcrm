@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VisitsRouteImport } from './routes/visits'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as SuperAdminRouteImport } from './routes/super-admin'
 import { Route as SubscriptionRouteImport } from './routes/subscription'
 import { Route as ReferRouteImport } from './routes/refer'
@@ -30,6 +31,11 @@ import { Route as LeadsIdRouteImport } from './routes/leads.$id'
 const VisitsRoute = VisitsRouteImport.update({
   id: '/visits',
   path: '/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperAdminRoute = SuperAdminRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/refer': typeof ReferRoute
   '/subscription': typeof SubscriptionRoute
   '/super-admin': typeof SuperAdminRoute
+  '/team': typeof TeamRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
   '/leads/': typeof LeadsIndexRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/refer': typeof ReferRoute
   '/subscription': typeof SubscriptionRoute
   '/super-admin': typeof SuperAdminRoute
+  '/team': typeof TeamRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
   '/leads': typeof LeadsIndexRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/refer': typeof ReferRoute
   '/subscription': typeof SubscriptionRoute
   '/super-admin': typeof SuperAdminRoute
+  '/team': typeof TeamRoute
   '/visits': typeof VisitsRoute
   '/leads/$id': typeof LeadsIdRoute
   '/leads/': typeof LeadsIndexRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/subscription'
     | '/super-admin'
+    | '/team'
     | '/visits'
     | '/leads/$id'
     | '/leads/'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/subscription'
     | '/super-admin'
+    | '/team'
     | '/visits'
     | '/leads/$id'
     | '/leads'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/subscription'
     | '/super-admin'
+    | '/team'
     | '/visits'
     | '/leads/$id'
     | '/leads/'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   ReferRoute: typeof ReferRoute
   SubscriptionRoute: typeof SubscriptionRoute
   SuperAdminRoute: typeof SuperAdminRoute
+  TeamRoute: typeof TeamRoute
   VisitsRoute: typeof VisitsRoute
   LeadsIdRoute: typeof LeadsIdRoute
   LeadsIndexRoute: typeof LeadsIndexRoute
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/visits'
       fullPath: '/visits'
       preLoaderRoute: typeof VisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super-admin': {
@@ -390,6 +410,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReferRoute: ReferRoute,
   SubscriptionRoute: SubscriptionRoute,
   SuperAdminRoute: SuperAdminRoute,
+  TeamRoute: TeamRoute,
   VisitsRoute: VisitsRoute,
   LeadsIdRoute: LeadsIdRoute,
   LeadsIndexRoute: LeadsIndexRoute,

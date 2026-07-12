@@ -2,13 +2,15 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Home, Users, Calendar, User, Plus, Menu, Bell, Search, X, MapPin, Building2,
   Trophy, GraduationCap, CreditCard, Gift, Handshake, PhoneCall, CheckSquare,
-  ArrowRight, Check,
+  ArrowRight, Check, Shield, UsersRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LEADS } from "@/lib/leads-data";
 import { addLead } from "@/lib/leads-store";
 import { ALL_STATUSES, type PipelineStatus } from "@/lib/pipeline";
 import { onQuickAdd, openQuickAdd, onGlobalSearch, openGlobalSearch, saveQuickAddEntry, type QuickAddType } from "@/lib/quick-add-store";
+import { useAuth } from "@/lib/AuthContext";
+import { useFeatures, type FeatureKey } from "@/lib/features";
 
 type Tab = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
