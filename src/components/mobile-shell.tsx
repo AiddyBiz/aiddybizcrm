@@ -148,7 +148,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
               <button onClick={() => setMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-md hover:bg-slate-100"><X className="h-4 w-4" /></button>
             </div>
             <ul className="space-y-0.5">
-              {MENU_LINKS.map((l) => {
+              {visibleLinks.map((l) => {
                 const active = pathname === l.to || (l.to !== "/dashboard" && pathname.startsWith(l.to));
                 return (
                   <li key={l.to}>
@@ -159,7 +159,7 @@ export function MobileShell({ title, children, action }: { title: string; childr
                 );
               })}
             </ul>
-            <Link to="/" onClick={() => setMenuOpen(false)} className="mt-6 block rounded-md border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50">Sign out</Link>
+            <button onClick={handleSignOut} className="mt-6 block w-full rounded-md border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50">Sign out</button>
           </aside>
         </div>
       )}
