@@ -55,6 +55,25 @@ export function MobileShell({ title, children, action }: { title: string; childr
   const [fabOpen, setFabOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState<QuickAddType | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { enabled: features } = useFeatures();
+
+  const visibleLinks = useMemo(
+    () =>
+      MENU_LINKS.filter((l) => {
+        if (l.roles && !l.roles.includes(profile?.role ?? "")) return false;
+        if (l.feature && !features[l.feature]) return false;
+        return true;
+      }),
+    [profile?.role, features],
+  );
+
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   useEffect(() => onQuickAdd((t) => setQuickAdd(t)), []);
   useEffect(() => onGlobalSearch(() => setSearchOpen(true)), []);
