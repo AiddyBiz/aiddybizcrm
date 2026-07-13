@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell, Avatar, Chip, SectionTitle, Tabs } from "@/components/mobile-shell";
 import { MissionDashboard } from "@/components/mission-dashboard";
-import { Pencil, Trophy, Zap, Flame, Target, Award, BookOpen, Gift, MapPin, TrendingUp, Star, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { Pencil, Trophy, Zap, Flame, Target, Award, BookOpen, Gift, MapPin, TrendingUp, Star, CheckCircle2, Save, Loader2, Camera, Mail, KeyRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — AiddyBiz CRM" }] }),
@@ -11,6 +13,11 @@ export const Route = createFileRoute("/profile")({
 
 function Profile() {
   const [tab, setTab] = useState("Overview");
+  const { profile, user, updateProfile, updatePassword, sendPasswordReset } = useAuth();
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Your Name";
+  const email = user?.email || "";
+
   return (
     <MobileShell title="My Growth">
       <div className="px-4 pt-4">
@@ -19,18 +26,22 @@ function Profile() {
           <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-primary/25 blur-2xl" />
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Avatar name="Arjun K" size={72} />
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="h-[72px] w-[72px] rounded-full object-cover" />
+              ) : (
+                <Avatar name={displayName} size={72} />
+              )}
               <span className="absolute -bottom-1 -right-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">L12</span>
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-lg font-semibold">Arjun Krishnan</h2>
-              <p className="text-xs text-muted-foreground">Senior Sales · Bengaluru</p>
+              <h2 className="truncate text-lg font-semibold">{displayName}</h2>
+              <p className="text-xs text-muted-foreground">{profile?.role?.replace("_", " ") ?? "Agent"} · {email}</p>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 <Chip tone="primary"><Trophy className="h-3 w-3" />Gold</Chip>
                 <Chip tone="warning"><Flame className="h-3 w-3" />21d</Chip>
               </div>
             </div>
-            <button className="grid h-9 w-9 place-items-center rounded-full bg-surface-elevated"><Pencil className="h-4 w-4" /></button>
+            <button onClick={() => setTab("Settings")} className="grid h-9 w-9 place-items-center rounded-full bg-surface-elevated"><Pencil className="h-4 w-4" /></button>
           </div>
 
           {/* XP bar */}
@@ -76,14 +87,25 @@ function Profile() {
         </div>
 
         <div className="mt-5">
-          <Tabs tabs={["Overview", "Mission", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
+          <Tabs tabs={["Overview", "Settings", "Mission", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
         </div>
+
+        {tab === "Settings" && (
+          <SettingsPanel
+            initial={{ full_name: profile?.full_name ?? "", phone: profile?.phone ?? "", avatar_url: profile?.avatar_url ?? "" }}
+            email={email}
+            onSave={async (patch) => { await updateProfile(patch); toast.success("Profile updated"); }}
+            onPasswordChange={async (pw) => { await updatePassword(pw); toast.success("Password updated"); }}
+            onPasswordReset={async () => { await sendPasswordReset(); toast.success("Password reset email sent"); }}
+          />
+        )}
 
         {tab === "Mission" && (
           <div className="mt-4">
             <MissionDashboard />
           </div>
         )}
+
 
         {tab === "Overview" && (
           <>
