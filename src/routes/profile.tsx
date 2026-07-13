@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell, Avatar, Chip, SectionTitle, Tabs } from "@/components/mobile-shell";
 import { MissionDashboard } from "@/components/mission-dashboard";
-import { Pencil, Trophy, Zap, Flame, Target, Award, BookOpen, Gift, MapPin, TrendingUp, Star, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { Pencil, Trophy, Zap, Flame, Target, Award, BookOpen, Gift, MapPin, TrendingUp, Star, CheckCircle2, Save, Loader2, Camera, Mail, KeyRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — AiddyBiz CRM" }] }),
@@ -11,6 +13,11 @@ export const Route = createFileRoute("/profile")({
 
 function Profile() {
   const [tab, setTab] = useState("Overview");
+  const { profile, user, updateProfile, updatePassword, sendPasswordReset } = useAuth();
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Your Name";
+  const email = user?.email || "";
+
   return (
     <MobileShell title="My Growth">
       <div className="px-4 pt-4">
@@ -19,18 +26,22 @@ function Profile() {
           <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-primary/25 blur-2xl" />
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Avatar name="Arjun K" size={72} />
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="h-[72px] w-[72px] rounded-full object-cover" />
+              ) : (
+                <Avatar name={displayName} size={72} />
+              )}
               <span className="absolute -bottom-1 -right-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">L12</span>
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-lg font-semibold">Arjun Krishnan</h2>
-              <p className="text-xs text-muted-foreground">Senior Sales · Bengaluru</p>
+              <h2 className="truncate text-lg font-semibold">{displayName}</h2>
+              <p className="text-xs text-muted-foreground">{profile?.role?.replace("_", " ") ?? "Agent"} · {email}</p>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 <Chip tone="primary"><Trophy className="h-3 w-3" />Gold</Chip>
                 <Chip tone="warning"><Flame className="h-3 w-3" />21d</Chip>
               </div>
             </div>
-            <button className="grid h-9 w-9 place-items-center rounded-full bg-surface-elevated"><Pencil className="h-4 w-4" /></button>
+            <button onClick={() => setTab("Settings")} className="grid h-9 w-9 place-items-center rounded-full bg-surface-elevated"><Pencil className="h-4 w-4" /></button>
           </div>
 
           {/* XP bar */}
@@ -76,14 +87,25 @@ function Profile() {
         </div>
 
         <div className="mt-5">
-          <Tabs tabs={["Overview", "Mission", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
+          <Tabs tabs={["Overview", "Settings", "Mission", "Performance", "Achievements", "Learning", "Rewards"]} value={tab} onChange={setTab} />
         </div>
+
+        {tab === "Settings" && (
+          <SettingsPanel
+            initial={{ full_name: profile?.full_name ?? "", phone: profile?.phone ?? "", avatar_url: profile?.avatar_url ?? "" }}
+            email={email}
+            onSave={async (patch) => { await updateProfile(patch); toast.success("Profile updated"); }}
+            onPasswordChange={async (pw) => { await updatePassword(pw); toast.success("Password updated"); }}
+            onPasswordReset={async () => { await sendPasswordReset(); toast.success("Password reset email sent"); }}
+          />
+        )}
 
         {tab === "Mission" && (
           <div className="mt-4">
             <MissionDashboard />
           </div>
         )}
+
 
         {tab === "Overview" && (
           <>
@@ -211,5 +233,167 @@ function Profile() {
         <p className="mt-6 text-center text-[11px] text-muted-foreground">AiddyBiz · v3.2.0 · <MapPin className="inline h-3 w-3" /> Bengaluru</p>
       </div>
     </MobileShell>
+  );
+}
+
+function SettingsPanel({
+  initial,
+  email,
+  onSave,
+  onPasswordChange,
+  onPasswordReset,
+}: {
+  initial: { full_name: string; phone: string; avatar_url: string };
+  email: string;
+  onSave: (patch: { full_name: string; phone: string; avatar_url: string | null }) => Promise<void>;
+  onPasswordChange: (pw: string) => Promise<void>;
+  onPasswordReset: () => Promise<void>;
+}) {
+  const [fullName, setFullName] = useState(initial.full_name);
+  const [phone, setPhone] = useState(initial.phone);
+  const [avatarUrl, setAvatarUrl] = useState(initial.avatar_url);
+  const [saving, setSaving] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [pwBusy, setPwBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setFullName(initial.full_name);
+    setPhone(initial.phone);
+    setAvatarUrl(initial.avatar_url);
+  }, [initial.full_name, initial.phone, initial.avatar_url]);
+
+  const pickImage = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Please choose an image under 2 MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setAvatarUrl(String(reader.result ?? ""));
+    reader.readAsDataURL(file);
+  };
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({ full_name: fullName.trim(), phone: phone.trim(), avatar_url: avatarUrl || null });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changePw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.length < 6) return toast.error("Password must be at least 6 characters");
+    if (pw !== pw2) return toast.error("Passwords do not match");
+    setPwBusy(true);
+    try {
+      await onPasswordChange(pw);
+      setPw(""); setPw2("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const sendReset = async () => {
+    setResetBusy(true);
+    try { await onPasswordReset(); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Failed to send reset email"); }
+    finally { setResetBusy(false); }
+  };
+
+  return (
+    <>
+      <SectionTitle title="Profile details" />
+      <form onSubmit={save} className="card-soft space-y-4 p-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
+            ) : (
+              <Avatar name={fullName || "You"} size={64} />
+            )}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground shadow"
+              aria-label="Change photo"
+            >
+              <Camera className="h-3.5 w-3.5" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) pickImage(f); }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{fullName || "Your name"}</p>
+            <p className="truncate text-xs text-muted-foreground">{email}</p>
+            {avatarUrl && (
+              <button type="button" onClick={() => setAvatarUrl("")} className="mt-1 text-[11px] font-medium text-red-500">Remove photo</button>
+            )}
+          </div>
+        </div>
+
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Full name</span>
+          <input value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={80}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phone</span>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" maxLength={20} placeholder="+91 98765 43210"
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Email</span>
+          <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+            <Mail className="h-4 w-4" />{email}
+          </div>
+        </label>
+
+        <button type="submit" disabled={saving}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
+        </button>
+      </form>
+
+      <SectionTitle title="Password" />
+      <form onSubmit={changePw} className="card-soft space-y-3 p-4">
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">New password</span>
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} minLength={6} required
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Confirm password</span>
+          <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} minLength={6} required
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+        <div className="flex gap-2">
+          <button type="submit" disabled={pwBusy}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+            {pwBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} Update
+          </button>
+          <button type="button" onClick={sendReset} disabled={resetBusy}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-60">
+            {resetBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Email reset link
+          </button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">Password must be at least 6 characters.</p>
+      </form>
+    </>
   );
 }

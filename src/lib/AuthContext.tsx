@@ -18,6 +18,8 @@ export interface Profile {
   full_name: string | null;
   role: AppRole;
   workspace_id: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface Workspace {
@@ -39,6 +41,9 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
+  updateProfile: (patch: { full_name?: string; phone?: string | null; avatar_url?: string | null }) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
+  sendPasswordReset: (email?: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -49,7 +54,7 @@ async function loadProfileAndWorkspace(
 ): Promise<{ profile: Profile | null; workspace: Workspace | null }> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, workspace_id")
+    .select("id, full_name, role, workspace_id, phone, avatar_url")
     .eq("id", userId)
     .maybeSingle();
 
@@ -158,6 +163,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setWorkspace(w);
   };
 
+  const updateProfile = async (patch: { full_name?: string; phone?: string | null; avatar_url?: string | null }) => {
+    if (!session?.user) throw new Error("Not signed in");
+    const { data, error: err } = await supabase
+      .from("profiles")
+      .update(patch)
+      .eq("id", session.user.id)
+      .select("id, full_name, role, workspace_id, phone, avatar_url")
+      .single();
+    if (err) throw err;
+    setProfile(data as Profile);
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error: err } = await supabase.auth.updateUser({ password: newPassword });
+    if (err) throw err;
+  };
+
+  const sendPasswordReset = async (email?: string) => {
+    const target = email ?? session?.user?.email;
+    if (!target) throw new Error("Email required");
+    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined;
+    const { error: err } = await supabase.auth.resetPasswordForEmail(target, { redirectTo });
+    if (err) throw err;
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
@@ -172,6 +202,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signOut,
       refresh,
+      updateProfile,
+      updatePassword,
+      sendPasswordReset,
       clearError: () => setError(null),
     }),
     [session, profile, workspace, isLoading, error],
