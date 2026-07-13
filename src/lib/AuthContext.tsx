@@ -54,7 +54,7 @@ async function loadProfileAndWorkspace(
 ): Promise<{ profile: Profile | null; workspace: Workspace | null }> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, workspace_id")
+    .select("id, full_name, role, workspace_id, phone, avatar_url")
     .eq("id", userId)
     .maybeSingle();
 
