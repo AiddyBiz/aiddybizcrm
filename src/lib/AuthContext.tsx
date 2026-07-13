@@ -18,6 +18,8 @@ export interface Profile {
   full_name: string | null;
   role: AppRole;
   workspace_id: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface Workspace {
