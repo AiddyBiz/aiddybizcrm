@@ -41,6 +41,9 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
+  updateProfile: (patch: { full_name?: string; phone?: string | null; avatar_url?: string | null }) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
+  sendPasswordReset: (email?: string) => Promise<void>;
   clearError: () => void;
 }
 
